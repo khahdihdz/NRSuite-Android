@@ -3,26 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NRSuite Android — Tiếng Việt</title>
+<meta name="description" content="NRSuite Android — bộ công cụ nghiên cứu mạng và thiết bị không dây trên Android.">
+<title>NRSuite Android — Bộ công cụ nghiên cứu không dây</title>
 <style>
-body{font-family:system-ui,-apple-system,sans-serif;max-width:860px;margin:40px auto;padding:0 20px;line-height:1.6}
-.card{border:1px solid #ddd;border-radius:16px;padding:24px;margin:18px 0}
-a{display:inline-block;padding:10px 16px;border-radius:10px;background:#111;color:#fff;text-decoration:none;margin-right:8px}
-code{background:#f3f3f3;padding:2px 5px;border-radius:5px}
+:root{color-scheme:dark;--bg:#071018;--panel:#0d1a24;--line:#1d3443;--text:#eaf3f7;--muted:#9db0bb;--accent:#5eead4;--accent2:#60a5fa}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 20% 0%,#123044 0,#071018 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65}
+.wrap{max-width:1100px;margin:auto;padding:0 22px}.nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}.brand{font-weight:800;letter-spacing:.3px}.nav a{color:var(--muted);text-decoration:none;margin-left:20px}.hero{padding:72px 0 56px}.eyebrow{color:var(--accent);font-weight:700}.hero h1{font-size:clamp(42px,7vw,78px);line-height:1.02;margin:12px 0 22px;max-width:850px}.hero p{font-size:20px;color:var(--muted);max-width:760px}.buttons{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}.btn{display:inline-block;padding:13px 19px;border-radius:12px;text-decoration:none;font-weight:750;border:1px solid var(--line)}.primary{background:var(--accent);color:#04201d;border-color:var(--accent)}.secondary{color:var(--text);background:#0b1720}.section{padding:58px 0}.section h2{font-size:34px;margin:0 0 10px}.lead{color:var(--muted);max-width:720px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}.card{background:rgba(13,26,36,.84);border:1px solid var(--line);border-radius:18px;padding:24px}.icon{font-size:28px}.card h3{margin:12px 0 8px}.card p{color:var(--muted);margin:0}.wide{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.list{padding:0;margin:18px 0 0;list-style:none}.list li{padding:11px 0;border-bottom:1px solid var(--line);color:var(--muted)}.list strong{color:var(--text)}.note{border-left:3px solid var(--accent);padding:16px 18px;background:rgba(94,234,212,.06);color:var(--muted);border-radius:0 12px 12px 0}.footer{padding:45px 0;color:var(--muted);border-top:1px solid var(--line)}@media(max-width:800px){.grid,.wide{grid-template-columns:1fr}.hero{padding-top:40px}.nav div:last-child{display:none}}
 </style>
 </head>
 <body>
-<h1>NRSuite Android 🇻🇳</h1>
-<p>Bản Android NRSuite với hạ tầng hỗ trợ tiếng Việt và trang phát hành dành cho người dùng Việt Nam.</p>
-<div class="card">
-<h2>Tải ứng dụng</h2>
-<p>APK/AAB chính thức được tạo bởi GitHub Actions và phát hành trong GitHub Releases.</p>
-<a href="https://github.com/khahdihdz/NRSuite-Android/releases">GitHub Releases</a>
-<a href="https://github.com/khahdihdz/NRSuite-Android">Mã nguồn</a>
+<div class="wrap">
+<nav class="nav"><div class="brand">NRSuite Android 🇻🇳</div><div><a href="#features">Tính năng</a><a href="#about">Giới thiệu</a><a href="#download">Tải xuống</a></div></nav>
+
+<header class="hero">
+<div class="eyebrow">ANDROID • WI-FI • BLE • ESP32</div>
+<h1>Bộ công cụ nghiên cứu mạng không dây, ngay trên Android.</h1>
+<p>NRSuite Android là ứng dụng đồng hành cho NRSuite, tập trung vào khảo sát Wi‑Fi/BLE, thu thập PCAP, quản lý thông tin xác thực và làm việc với phần cứng ESP32 qua USB‑OTG.</p>
+<div class="buttons"><a class="btn primary" href="https://github.com/khahdihdz/NRSuite-Android/releases">Tải bản phát hành</a><a class="btn secondary" href="https://github.com/khahdihdz/NRSuite-Android">Xem mã nguồn</a></div>
+</header>
+
+<section id="features" class="section">
+<h2>Tính năng chính</h2>
+<p class="lead">Giao diện được thiết kế để gom các tác vụ nghiên cứu mạng và thiết bị không dây vào một ứng dụng Android.</p>
+<div class="grid">
+<article class="card"><div class="icon">📡</div><h3>Khảo sát Wi‑Fi</h3><p>Quan sát và làm việc với dữ liệu mạng Wi‑Fi phục vụ nghiên cứu, phân tích và kiểm thử trong môi trường được phép.</p></article>
+<article class="card"><div class="icon">🟦</div><h3>Bluetooth Low Energy</h3><p>Các mô-đun BLE hỗ trợ quy trình nghiên cứu thiết bị và giao tiếp không dây.</p></article>
+<article class="card"><div class="icon">🛡️</div><h3>Phòng vệ & kiểm thử</h3><p>Tập trung các mô-đun nghiên cứu offense/defense của NRSuite trong một giao diện Android.</p></article>
+<article class="card"><div class="icon">🧪</div><h3>PCAP</h3><p>Hỗ trợ thu thập và làm việc với dữ liệu packet capture cho các quy trình phân tích mạng.</p></article>
+<article class="card"><div class="icon">🔐</div><h3>Thông tin xác thực</h3><p>Quản lý credential trong ứng dụng theo mô hình phù hợp cho môi trường nghiên cứu.</p></article>
+<article class="card"><div class="icon">⚡</div><h3>ESP32 + USB‑OTG</h3><p>Kết nối và hỗ trợ nạp firmware cho phần cứng ESP32 trực tiếp từ thiết bị Android.</p></article>
+</div>
+</section>
+
+<section id="about" class="section">
+<div class="wide">
+<div>
+<h2>Được xây cho nghiên cứu thực tế</h2>
+<p class="lead">NRSuite Android hướng tới người dùng cần một giao diện di động cho các tác vụ nghiên cứu mạng, không dây và phần cứng.</p>
+<ul class="list">
+<li><strong>Android:</strong> thao tác trực tiếp trên thiết bị di động.</li>
+<li><strong>Wi‑Fi / BLE:</strong> các mô-đun dành cho nghiên cứu giao tiếp không dây.</li>
+<li><strong>PCAP:</strong> thu thập dữ liệu phục vụ phân tích.</li>
+<li><strong>ESP32:</strong> làm việc với firmware qua USB‑OTG.</li>
+</ul>
 </div>
 <div class="card">
-<h2>Trạng thái Việt hóa</h2>
-<p>Hệ thống locale tiếng Việt đã được thêm vào dự án. Các chuỗi Compose hard-code sẽ được chuyển dần sang resource để bảo đảm bản dịch đầy đủ mà không ảnh hưởng logic kỹ thuật.</p>
+<h3>🇻🇳 Việt hóa</h3>
+<p>Trang giới thiệu và hạ tầng locale tiếng Việt đã được bổ sung. Các chuỗi giao diện Android sẽ tiếp tục được chuyển sang resource để bản dịch nhất quán mà không thay đổi logic kỹ thuật.</p>
+<br>
+<div class="note">Chỉ sử dụng các chức năng kiểm thử và nghiên cứu trên hệ thống, thiết bị hoặc mạng mà bạn có quyền kiểm tra.</div>
+</div>
+</div>
+</section>
+
+<section id="download" class="section">
+<div class="card">
+<h2>Sẵn sàng trải nghiệm?</h2>
+<p class="lead">Xem các bản phát hành, mã nguồn và tiến độ phát triển trực tiếp trên GitHub.</p>
+<div class="buttons"><a class="btn primary" href="https://github.com/khahdihdz/NRSuite-Android/releases">GitHub Releases</a><a class="btn secondary" href="https://github.com/khahdihdz/NRSuite-Android">Repository</a></div>
+</div>
+</section>
+
+<footer class="footer">NRSuite Android · Trang giới thiệu tiếng Việt · Mã nguồn mở trên GitHub</footer>
 </div>
 </body>
 </html>
