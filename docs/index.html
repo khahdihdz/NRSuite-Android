@@ -23,15 +23,40 @@
 </header>
 
 <section id="features" class="section">
-<h2>Tính năng chính</h2>
-<p class="lead">Giao diện được thiết kế để gom các tác vụ nghiên cứu mạng và thiết bị không dây vào một ứng dụng Android.</p>
+<h2>Tính năng</h2>
+<p class="lead">NRSuite Android tập hợp các công cụ khảo sát, phân tích và phòng vệ mạng không dây cùng tiện ích phần cứng vào một giao diện Android.</p>
+
 <div class="grid">
-<article class="card"><div class="icon">📡</div><h3>Khảo sát Wi‑Fi</h3><p>Quan sát và làm việc với dữ liệu mạng Wi‑Fi phục vụ nghiên cứu, phân tích và kiểm thử trong môi trường được phép.</p></article>
-<article class="card"><div class="icon">🟦</div><h3>Bluetooth Low Energy</h3><p>Các mô-đun BLE hỗ trợ quy trình nghiên cứu thiết bị và giao tiếp không dây.</p></article>
-<article class="card"><div class="icon">🛡️</div><h3>Phòng vệ & kiểm thử</h3><p>Tập trung các mô-đun nghiên cứu offense/defense của NRSuite trong một giao diện Android.</p></article>
-<article class="card"><div class="icon">🧪</div><h3>PCAP</h3><p>Hỗ trợ thu thập và làm việc với dữ liệu packet capture cho các quy trình phân tích mạng.</p></article>
-<article class="card"><div class="icon">🔐</div><h3>Thông tin xác thực</h3><p>Quản lý credential trong ứng dụng theo mô hình phù hợp cho môi trường nghiên cứu.</p></article>
-<article class="card"><div class="icon">⚡</div><h3>ESP32 + USB‑OTG</h3><p>Kết nối và hỗ trợ nạp firmware cho phần cứng ESP32 trực tiếp từ thiết bị Android.</p></article>
+<article class="card"><div class="icon">📡</div><h3>Khảo sát Wi‑Fi</h3><p>Phát hiện điểm truy cập, kênh, SSID, BSSID, RSSI, bảo mật và thông tin WPS để phục vụ khảo sát mạng.</p></article>
+<article class="card"><div class="icon">🕵️</div><h3>Phân tích gói tin</h3><p>Thu thập dữ liệu packet capture và xuất PCAP để phục vụ phân tích lưu lượng trong môi trường được phép.</p></article>
+<article class="card"><div class="icon">🟦</div><h3>Bluetooth Low Energy</h3><p>Quét thiết bị BLE, xem RSSI và dữ liệu nhà sản xuất, đồng thời khảo sát dịch vụ và characteristic GATT.</p></article>
+<article class="card"><div class="icon">🛡️</div><h3>Phòng vệ mạng</h3><p>Hỗ trợ phát hiện điểm truy cập đáng ngờ, theo dõi sự kiện Wi‑Fi, thiết bị theo dõi và các dấu hiệu bất thường.</p></article>
+<article class="card"><div class="icon">🔐</div><h3>Quản lý thông tin xác thực</h3><p>Lưu trữ credential cục bộ và hỗ trợ các quy trình kiểm thử được ủy quyền.</p></article>
+<article class="card"><div class="icon">🔌</div><h3>USB‑OTG & ESP32</h3><p>Kết nối nhiều thiết bị USB/ESP32, theo dõi serial và hỗ trợ các tiện ích firmware trực tiếp từ Android.</p></article>
+<article class="card"><div class="icon">🧰</div><h3>Công cụ hệ thống</h3><p>Tra cứu nhà sản xuất MAC/OUI, quản lý phiên USB và chọn thiết bị ngoại vi cho từng tác vụ.</p></article>
+<article class="card"><div class="icon">🌐</div><h3>Mesh & ESP‑NOW</h3><p>Kiến trúc mở rộng cho mạng nút cảm biến, báo cáo dữ liệu và các tính năng mesh trong lộ trình phát triển.</p></article>
+<article class="card"><div class="icon">📷</div><h3>Mở rộng phần cứng</h3><p>Lộ trình hỗ trợ camera ESP32, LoRa, hồng ngoại, RFID/NFC, Sub‑GHz và các ngoại vi vô tuyến khác.</p></article>
+</div>
+
+<div class="wide" style="margin-top:18px">
+<div class="card">
+<h3>Đã triển khai</h3>
+<ul class="list">
+<li><strong>Wi‑Fi:</strong> quét mạng, phân tích dữ liệu và thu thập PCAP.</li>
+<li><strong>BLE:</strong> scanner và khảo sát GATT.</li>
+<li><strong>Phòng vệ:</strong> phát hiện AP giả mạo, deauthentication, tracker và client bất thường.</li>
+<li><strong>USB:</strong> nhiều phiên thiết bị, Serial Monitor và quản lý thiết bị firmware.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Đang phát triển</h3>
+<ul class="list">
+<li><strong>Mesh:</strong> đồng bộ nút, báo cáo cảm biến và định vị RSSI.</li>
+<li><strong>ESP32‑CAM:</strong> camera và phát hiện chuyển động.</li>
+<li><strong>LoRa:</strong> liên kết tầm xa và cầu nối mesh.</li>
+<li><strong>Ngoại vi:</strong> IR, Sub‑GHz, nRF24 và RFID/NFC.</li>
+</ul>
+</div>
 </div>
 </section>
 
