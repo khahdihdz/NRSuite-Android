@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NRSuite</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
+    <string name="language_english">English</string>
+    <string name="action_back">Quay lại</string>
+    <string name="action_settings">Cài đặt</string>
+    <string name="action_connect">Kết nối</string>
+    <string name="action_disconnect">Ngắt kết nối</string>
+    <string name="action_refresh">Làm mới</string>
+    <string name="action_download">Tải xuống</string>
+    <string name="action_later">Để sau</string>
+    <string name="action_ok">OK</string>
+    <string name="status_online">Trực tuyến</string>
+    <string name="status_offline">Ngoại tuyến</string>
+    <string name="status_connecting">Đang kết nối…</string>
+    <string name="status_error">Lỗi</string>
+    <string name="status_unavailable">Không khả dụng</string>
+    <string name="home">Trang chính</string>
+    <string name="modules">Mô-đun</string>
+    <string name="logs">Nhật ký</string>
+    <string name="wifi_recon">Khảo sát Wi-Fi</string>
+    <string name="wifi_attacks">Tấn công Wi-Fi</string>
+    <string name="wifi_defense">Phòng vệ Wi-Fi</string>
+    <string name="ble">BLE</string>
+    <string name="mesh">Mesh</string>
+    <string name="tools">Công cụ</string>
+    <string name="credentials">Thông tin xác thực</string>
+    <string name="storage">Bộ nhớ</string>
+    <string name="firmware">Firmware</string>
+</resources>
