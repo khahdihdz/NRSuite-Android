@@ -10,8 +10,10 @@ permissions:
   contents: read
 
 concurrency:
+  # Queue runs on the same branch instead of canceling the newer run.
+  # This prevents a valid fix from being discarded while an older CI run is finishing.
   group: android-ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
