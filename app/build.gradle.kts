@@ -4,9 +4,7 @@ import java.util.Properties
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val hasReleaseSigning = keystorePropertiesFile.exists()
 val keystoreProperties = Properties().apply {
-    if (hasReleaseSigning) {
-        FileInputStream(keystorePropertiesFile).use { load(it) }
-    }
+    if (hasReleaseSigning) FileInputStream(keystorePropertiesFile).use { load(it) }
 }
 
 plugins {
@@ -17,9 +15,7 @@ plugins {
 
 android {
     namespace = "com.swp81x.nrsuite"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk { version = release(36) }
 
     defaultConfig {
         applicationId = "com.swp81x.nrsuite"
@@ -27,7 +23,6 @@ android {
         targetSdk = 36
         versionCode = 2
         versionName = "1.0.0-beta.2"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -44,31 +39,20 @@ android {
 
     buildTypes {
         release {
-            // Prefer the protected release key from keystore.properties.
-            // When it is not available, fall back to Android's standard debug
-            // signing key so CI/local release APKs are still installable.
-            signingConfig = if (hasReleaseSigning) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
+            check(hasReleaseSigning) {
+                "Release signing is required. Configure the shared ANDROID_SIGNING_* GitHub secrets or keystore.properties."
             }
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
-    }
+    kotlinOptions { jvmTarget = "11" }
+    buildFeatures { compose = true }
 }
 
 dependencies {
@@ -78,11 +62,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.usb.serial) {
-        // The JitPack POM asks for Kotlin stdlib 2.2.x. This project uses Kotlin 2.0.21;
-        // the serial library itself is Java, so exclude the transitive stdlib.
-        exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-    }
+    implementation(libs.usb.serial) { exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib") }
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
