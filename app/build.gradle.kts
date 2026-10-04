@@ -44,10 +44,13 @@ android {
 
     buildTypes {
         release {
+            // Prefer the protected release key from keystore.properties.
+            // When it is not available, fall back to Android's standard debug
+            // signing key so CI/local release APKs are still installable.
             signingConfig = if (hasReleaseSigning) {
                 signingConfigs.getByName("release")
             } else {
-                null
+                signingConfigs.getByName("debug")
             }
             isMinifyEnabled = false
             proguardFiles(
