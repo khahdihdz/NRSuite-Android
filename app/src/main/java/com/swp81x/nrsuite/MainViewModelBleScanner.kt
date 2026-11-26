@@ -1,0 +1,169 @@
+package com.swp81x.nrsuite
+
+import com.swp81x.nrsuite.core.ble.BleDeviceObservation
+import com.swp81x.nrsuite.core.ble.BleScanOwner
+import com.swp81x.nrsuite.core.ble.MAX_BLE_SCAN_DEVICES
+import com.swp81x.nrsuite.core.history.HistoryLevel
+import com.swp81x.nrsuite.core.log.LogLevel
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+
+// BLE Scanner: passive/active BLE advertisement discovery over NimBLE.
+
+internal fun MainViewModel.startBleScanImpl(active: Boolean, owner: BleScanOwner) {
+    val activeSession = session
+    if (activeSession == null) {
+        appendLog("Connect to a device before starting BLE scan.")
+        return
+    }
+    if (_bleScanStarting.value || _bleScanRunning.value || _bleScanStopping.value) {
+        val currentOwner = _bleScanOwner.value
+        if (currentOwner != null && currentOwner != owner) {
+            _toastMessage.value =
+                "BLE scan is already active in ${currentOwner.label}. Stop it there first."
+        }
+        return
+    }
+    if (!ensureRadioIdle(owner.label)) return
+
+    _bleScanActive.value = active
+    _bleScanOwner.value = owner
+    _bleScanStarting.value = true
+    updateForegroundService()
+
+    scope.launch {
+        val response = runCatching {
+            activeSession.sendCommand(
+                "BLE_SCAN_START",
+                JSONObject().apply {
+                    put("active", active)
+                    put("interval_ms", 100)
+                    put("window_ms", 99)
+                    put("min_emit_ms", 1000)
+                },
+                timeoutMs = 10_000,
+            )
+        }.onFailure { e ->
+            appendLog("BLE scan start failed: ${e.message}", level = LogLevel.ERROR)
+        }.getOrNull()
+
+        _bleScanStarting.value = false
+        if (response?.optBoolean("ok") == true) {
+            _bleScanDevices.value = emptyList()
+            _bleProfileTarget.value = null
+            _bleProfileStatus.value = "Select a discovered BLE device"
+            _bleProfileServices.value = emptyList()
+            _bleScanRunning.value = true
+            _bleScanStopping.value = false
+            updateForegroundService()
+            appendLog("BLE scan started from ${owner.label} (${if (active) "active" else "passive"} mode).")
+            addHistory(owner.moduleId, "BLE scan started", HistoryLevel.SUCCESS)
+        } else {
+            _bleScanRunning.value = false
+            _bleScanStopping.value = false
+            _bleScanOwner.value = null
+            updateForegroundService()
+            appendLog("Failed to start BLE scan: ${response?.optString("msg") ?: "timeout"}")
+        }
+    }
+}
+
+internal fun MainViewModel.stopBleScanImpl(owner: BleScanOwner) {
+    if (!_bleScanRunning.value || _bleScanStopping.value) return
+    val currentOwner = _bleScanOwner.value
+    if (currentOwner != null && currentOwner != owner) {
+        _toastMessage.value =
+            "BLE scan belongs to ${currentOwner.label}. Open that module to stop it."
+        return
+    }
+    _bleScanStopping.value = true
+    updateForegroundService()
+
+    val activeSession = session
+    scope.launch {
+        val response = runCatching {
+            activeSession?.sendCommand("BLE_SCAN_STOP", timeoutMs = 6_000)
+        }.onFailure { e ->
+            appendLog("BLE scan stop failed: ${e.message}", level = LogLevel.ERROR)
+        }.getOrNull()
+
+        _bleScanRunning.value = false
+        _bleScanStopping.value = false
+        _bleScanOwner.value = null
+        updateForegroundService()
+        if (response?.optBoolean("ok") == true) {
+            appendLog("BLE scan stopped.")
+            addHistory(owner.moduleId, "BLE scan stopped", HistoryLevel.INFO)
+        } else {
+            appendLog("BLE scan stop request sent without confirmation.")
+        }
+    }
+}
+
+internal fun MainViewModel.clearBleScanImpl() {
+    _bleScanDevices.value = emptyList()
+}
+
+internal fun MainViewModel.recordBleDeviceEvent(event: JSONObject) {
+    val address = event.optString("address").uppercase().takeIf { it.isNotBlank() } ?: return
+    val now = timeHmNow()
+    val name = event.optString("name").takeIf { it.isNotBlank() }
+    val rssi = event.optInt("rssi", -127)
+    val reconnectable = event.optBoolean("connectable", false)
+    val addressType = event.optInt("address_type", -1)
+    val txPower = event.optInt("tx_power", 0)
+    val appearance = event.optInt("appearance", 0)
+    val manufacturerData = event.optString("manufacturer_data").takeIf { it.isNotBlank() }
+    val rawPayload = event.optString("raw_payload").takeIf { it.isNotBlank() }
+    val services = mutableListOf<String>()
+    event.optJSONArray("services")?.let { array ->
+        for (i in 0 until array.length()) {
+            val service = array.optString(i)
+            if (service.isNotBlank()) services += service.uppercase()
+        }
+    }
+
+    val existing = _bleScanDevices.value.firstOrNull { it.address == address }
+    val updated = existing?.copy(
+        addressType = addressType,
+        name = name ?: existing.name,
+        rssi = rssi,
+        connectable = reconnectable,
+        txPower = txPower,
+        appearance = appearance,
+        manufacturerData = manufacturerData ?: existing.manufacturerData,
+        rawPayload = rawPayload ?: existing.rawPayload,
+        services = if (services.isEmpty()) existing.services else services,
+        lastSeen = now,
+        sightings = existing.sightings + 1,
+    ) ?: BleDeviceObservation(
+        address = address,
+        addressType = addressType,
+        name = name,
+        rssi = rssi,
+        connectable = reconnectable,
+        txPower = txPower,
+        appearance = appearance,
+        manufacturerData = manufacturerData,
+        services = services,
+        firstSeen = now,
+        lastSeen = now,
+        sightings = 1,
+        rawPayload = rawPayload,
+    )
+
+    _bleScanDevices.update { current ->
+        (listOf(updated) + current.filterNot { it.address == address })
+            .sortedByDescending { it.rssi }
+            .take(MAX_BLE_SCAN_DEVICES)
+    }
+
+    detectTrackerCandidate(
+        address = address,
+        name = updated.name,
+        rssi = rssi,
+        manufacturerData = updated.manufacturerData,
+        rawPayload = updated.rawPayload,
+    )
+}
