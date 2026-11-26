@@ -1,0 +1,380 @@
+package com.swp81x.nrsuite
+
+import android.net.Uri
+import com.swp81x.nrsuite.core.history.HistoryLevel
+import com.swp81x.nrsuite.core.log.LogLevel
+import com.swp81x.nrsuite.core.notifications.NrSuiteNotifications
+import com.swp81x.nrsuite.core.session.BleHidHeapFailure
+import com.swp81x.nrsuite.core.session.ConnectionState
+import com.swp81x.nrsuite.core.session.NrSession
+import com.swp81x.nrsuite.core.session.parseBleHidHeapFailure
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.update
+import org.json.JSONObject
+
+// BLE HID advertising, DuckyScript payloads, keyboard, mouse, and status polling.
+
+internal fun MainViewModel.setBlePayloadImpl(uri: Uri, name: String?) {
+    _blePayloadUri.value = uri
+    _blePayloadName.value = name ?: uri.lastPathSegment ?: "payload.txt"
+    appendLog("BLE payload selected: ${_blePayloadName.value}")
+}
+
+internal fun MainViewModel.clearBlePayloadImpl() {
+    _blePayloadUri.value = null
+    _blePayloadName.value = null
+    _bleSavedScriptText.value = null
+    appendLog("BLE payload cleared.")
+}
+
+internal fun MainViewModel.startBleImpl(advertiseName: String) {
+    val activeSession = session
+    if (activeSession == null) {
+        appendLog("Connect to a device before starting BLE HID.")
+        return
+    }
+    if (_bleSessionActive.value || _bleAdvertising.value || _bleConnected.value) return
+    val activeWifi = activeRadioLabel(includeBle = false)
+    if (activeWifi != null) {
+        appendLog(
+            "Cannot start BLE HID while $activeWifi is active. Stop $activeWifi first.",
+            level = LogLevel.ERROR,
+        )
+        return
+    }
+
+    scope.launch {
+        val name = advertiseName.trim().ifBlank { "NRSuite Keyboard" }
+        appendLog("Starting BLE HID advertising as '$name'...")
+        val response = activeSession.sendCommand(
+            "BLE_START",
+            JSONObject().put("name", name),
+            timeoutMs = 8_000,
+        )
+        if (response?.optBoolean("ok") == true) {
+            _bleLowHeapWarning.value = null
+            _bleAdvertising.value = true
+            _bleSessionActive.value = true
+            _bleLinkConnected.value = false
+            _bleConnected.value = false
+            _blePeer.value = ""
+            clearBleRealtimeStateImpl()
+            startBleStatusPollingImpl(activeSession)
+            updateForegroundService()
+            appendLog("BLE HID advertising started.")
+            addHistory("ble", "BLE HID advertising started as '$name'", HistoryLevel.SUCCESS)
+        } else {
+            val message = response?.optString("msg").orEmpty().ifBlank { "timeout or unsupported" }
+            val structuredHeapFailure =
+                response?.optString("error") == "insufficient_heap_for_ble_hid"
+            val parsedHeapFailure = parseBleHidHeapFailure(message)
+            if (structuredHeapFailure || parsedHeapFailure != null) {
+                val connected = _connectionState.value as? ConnectionState.Connected
+                val failure = BleHidHeapFailure(
+                    freeHeap = response?.optionalLong("heap")
+                        ?: parsedHeapFailure?.freeHeap
+                        ?: connected?.heapFree,
+                    largestBlock = response?.optionalLong("heap_max_alloc")
+                        ?: parsedHeapFailure?.largestBlock
+                        ?: connected?.heapMaxAlloc,
+                    message = message,
+                )
+                _bleLowHeapWarning.value = failure
+                appendLog(
+                    "BLE HID refused: insufficient heap " +
+                        "(free=${failure.freeHeap ?: "unknown"}, " +
+                        "largest=${failure.largestBlock ?: "unknown"}).",
+                    level = LogLevel.ERROR,
+                )
+            } else {
+                appendLog("Failed to start BLE HID: $message", level = LogLevel.ERROR)
+            }
+        }
+    }
+}
+
+internal fun MainViewModel.stopBleImpl() {
+    if (!_bleSessionActive.value && !_bleAdvertising.value && !_bleConnected.value) return
+    bleStatusJob?.cancel()
+    bleStatusJob = null
+    _bleAdvertising.value = false
+    _bleSessionActive.value = false
+    _bleLinkConnected.value = false
+    _bleConnected.value = false
+    _blePeer.value = ""
+    clearBleRealtimeStateImpl()
+    updateForegroundService()
+    val activeSession = session
+    scope.launch {
+        runCatching { activeSession?.sendCommand("BLE_RELEASE_ALL", timeoutMs = 3_000) }
+            .onFailure { e -> appendLog("BLE release failed: ${e.message}", level = LogLevel.ERROR) }
+        runCatching { activeSession?.sendCommand("BLE_MOUSE_RELEASE", timeoutMs = 3_000) }
+            .onFailure { e -> appendLog("BLE mouse release failed: ${e.message}", level = LogLevel.ERROR) }
+        val response = activeSession?.sendCommand("BLE_STOP", timeoutMs = 5_000)
+        appendLog(
+            if (response?.optBoolean("ok") == true) "BLE HID stopped."
+            else "BLE stop request sent."
+        )
+    }
+}
+
+internal fun MainViewModel.runBlePayloadImpl() {
+    val activeSession = session
+    val payloadUri = _blePayloadUri.value
+    val savedScript = _bleSavedScriptText.value
+    if (activeSession == null) {
+        appendLog("Connect to a device before running a BLE payload.")
+        return
+    }
+    if (!_bleConnected.value) {
+        appendLog("BLE host is not connected yet.")
+        return
+    }
+    if (_bleScriptRunning.value) {
+        appendLog("A BLE payload is already running.")
+        return
+    }
+    if (payloadUri == null && savedScript == null) {
+        appendLog("Choose a DuckyScript payload first.")
+        return
+    }
+    scope.launch {
+        val script = savedScript
+            ?: withContext(Dispatchers.IO) {
+                runCatching {
+                    payloadUri?.let {
+                        app.contentResolver
+                            .openInputStream(it)
+                            ?.use { stream -> stream.readBytes().toString(Charsets.UTF_8) }
+                    }
+                }.getOrNull()
+            }
+        if (script.isNullOrBlank()) {
+            appendLog("Could not read the selected BLE payload.")
+            return@launch
+        }
+        runBleScriptImpl(activeSession, script)
+    }
+}
+
+
+internal fun MainViewModel.sendBleRealtimeInputImpl(inserted: String, backspaces: Int) {
+    if (!_bleConnected.value || session == null) return
+    if (inserted.isEmpty() && backspaces <= 0) return
+
+    val payload = buildString {
+        repeat(backspaces.coerceAtLeast(0)) { append('\b') }
+        if (inserted.isNotEmpty()) append(inserted)
+    }
+    if (payload.isEmpty()) return
+
+    ensureBleTypeConsumerImpl()
+    bleTypeChannel.trySend(payload)
+}
+
+internal fun MainViewModel.sendBleSpecialKeyImpl(key: String) {
+    val activeSession = session ?: return
+    if (!_bleConnected.value || key.isBlank()) return
+    scope.launch {
+        runCatching {
+            activeSession.sendCommandNoWait(
+                "BLE_KEY_TAP",
+                JSONObject().put("key", key),
+            )
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+        releaseMomentaryModifiersImpl(activeSession)
+    }
+}
+
+internal fun MainViewModel.setBleModifierHoldImpl(enabled: Boolean) {
+    _bleModifierHold.value = enabled
+}
+
+internal fun MainViewModel.sendBleMouseMoveImpl(dx: Int, dy: Int) {
+    val activeSession = session ?: return
+    if (!_bleConnected.value || (dx == 0 && dy == 0)) return
+    scope.launch {
+        runCatching {
+            activeSession.sendCommandNoWait(
+                "BLE_MOUSE_MOVE",
+                JSONObject().put("dx", dx).put("dy", dy),
+            )
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+    }
+}
+
+internal fun MainViewModel.sendBleMouseScrollImpl(wheel: Int) {
+    val activeSession = session ?: return
+    if (!_bleConnected.value || wheel == 0) return
+    scope.launch {
+        runCatching {
+            activeSession.sendCommandNoWait(
+                "BLE_MOUSE_SCROLL",
+                JSONObject().put("wheel", wheel),
+            )
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+    }
+}
+
+internal fun MainViewModel.sendBleMouseButtonImpl(button: String, down: Boolean) {
+    val activeSession = session ?: return
+    if (!_bleConnected.value || button.isBlank()) return
+    scope.launch {
+        runCatching {
+            activeSession.sendCommandNoWait(
+                "BLE_MOUSE_BUTTON",
+                JSONObject().put("button", button).put("down", down),
+            )
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+    }
+}
+
+internal fun MainViewModel.releaseBleMouseButtonsImpl() {
+    val activeSession = session ?: return
+    if (!_bleConnected.value) return
+    scope.launch {
+        runCatching { activeSession.sendCommandNoWait("BLE_MOUSE_RELEASE") }
+            .onFailure { e ->
+                appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+            }
+    }
+}
+
+internal suspend fun MainViewModel.releaseMomentaryModifiersImpl(activeSession: NrSession?) {
+    if (_bleModifierHold.value) return
+    val active = _bleModifiers.value
+    if (active.isEmpty()) return
+    _bleModifiers.value = emptySet()
+    active.forEach { key ->
+        runCatching {
+            activeSession?.sendCommandNoWait(
+                "BLE_KEY_UP",
+                JSONObject().put("key", key),
+            )
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+    }
+}
+
+internal fun MainViewModel.setBleModifierImpl(key: String, down: Boolean) {
+    val activeSession = session ?: return
+    if (!_bleConnected.value || key.isBlank()) return
+
+    _bleModifiers.update { current ->
+        if (down) current + key else current - key
+    }
+    val cmd = if (down) "BLE_KEY_DOWN" else "BLE_KEY_UP"
+    scope.launch {
+        runCatching {
+            activeSession.sendCommandNoWait(cmd, JSONObject().put("key", key))
+        }.onFailure { e ->
+            appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+        }
+    }
+}
+
+private fun MainViewModel.ensureBleTypeConsumerImpl() {
+    if (bleTypeConsumerJob?.isActive == true) return
+    bleTypeConsumerJob = scope.launch {
+        for (payload in bleTypeChannel) {
+            val activeSession = session ?: continue
+            if (!_bleConnected.value) continue
+            runCatching {
+                activeSession.sendCommandNoWait(
+                    "BLE_TYPE_TEXT",
+                    JSONObject().put("text", payload),
+                )
+            }.onFailure { e ->
+                appendLog("BLE command failed: ${e.message}", level = LogLevel.ERROR)
+            }
+            releaseMomentaryModifiersImpl(activeSession)
+        }
+    }
+}
+
+internal fun MainViewModel.clearBleRealtimeStateImpl() {
+    _bleModifiers.value = emptySet()
+    while (bleTypeChannel.tryReceive().isSuccess) {
+        // Drain queued keystrokes that belong to the previous BLE session.
+    }
+    bleTypeConsumerJob?.cancel()
+    bleTypeConsumerJob = null
+}
+
+internal suspend fun MainViewModel.runBleScriptImpl(activeSession: NrSession, script: String) {
+    if (!_bleConnected.value) {
+        appendLog("BLE host is not connected yet.")
+        return
+    }
+    if (_bleScriptRunning.value) {
+        appendLog("A BLE payload is already running.")
+        return
+    }
+
+    _bleScriptRunning.value = true
+    try {
+        val response = runCatching {
+            activeSession.sendCommand(
+                "BLE_RUN_SCRIPT",
+                JSONObject().put("script", script),
+                timeoutMs = maxOf(10_000, script.length / 20L),
+            )
+        }.getOrNull()
+        if (response?.optBoolean("ok") == true) {
+            appendLog("BLE script finished (${response.optInt("lines")} lines).")
+        } else {
+            appendLog("BLE script failed: ${response?.optString("msg") ?: "timeout or disconnected"}")
+        }
+    } finally {
+        _bleScriptRunning.value = false
+    }
+}
+
+internal fun MainViewModel.startBleStatusPollingImpl(activeSession: NrSession) {
+    bleStatusJob?.cancel()
+    bleStatusJob = scope.launch {
+        // Poll for the full HID session, not just advertising/authenticated
+        // states. During pairing the GAP link exists while both can be false.
+        while (isActive && _bleSessionActive.value) {
+            delay(2_000)
+            val response = runCatching {
+                activeSession.sendCommand("BLE_STATUS", timeoutMs = 4_000)
+            }.getOrNull() ?: continue
+            if (response.optBoolean("ok")) {
+                val wasConnected = _bleConnected.value
+                val nowConnected = response.optBoolean("connected", _bleConnected.value)
+                val nowLinked = response.optBoolean("linked", false)
+                val peer = response.optString("peer", "")
+                _bleAdvertising.value = response.optBoolean("advertising", _bleAdvertising.value)
+                _bleLinkConnected.value = nowLinked
+                _bleConnected.value = nowConnected
+                _bleSessionActive.value = if (response.has("active")) {
+                    response.optBoolean("active", true)
+                } else {
+                    true
+                }
+                _blePeer.value = peer
+                if (!wasConnected && nowConnected) {
+                    NrSuiteNotifications.notifyBleConnected(app, peer)
+                }
+                updateForegroundService()
+            }
+        }
+    }
+}
+
+private fun JSONObject.optionalLong(key: String): Long? =
+    if (has(key) && !isNull(key)) optLong(key) else null
