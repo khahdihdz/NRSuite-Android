@@ -1,0 +1,65 @@
+# Third-Party Notices
+
+NRSuite itself is licensed under the GNU General Public License v3.0 or later.
+Third-party dependencies remain under their own licenses.
+
+Notable bundled/runtime components include:
+
+- AndroidX and Jetpack Compose — Apache License 2.0
+- Kotlin standard library and coroutines — Apache License 2.0
+- libusb (where bundled for native USB support) — GNU LGPL 2.1
+- Other Gradle dependencies retain the licenses declared by their respective
+  upstream projects and published Maven metadata.
+- Termux terminal-emulator and terminal-view — Apache License 2.0 for the
+  terminal emulation libraries — https://github.com/termux/termux-app —
+  vendored as native Android terminal rendering/input code. Termux itself is
+  not bundled; the app connects to a separately installed Termux SSH server.
+- JSch (mwiede fork) — BSD-style revised license —
+  https://github.com/mwiede/jsch — SSH client used for the local Termux
+  terminal connection.
+- Firmware PN532 support uses Adafruit PN532 — BSD 3-Clause —
+  https://github.com/adafruit/Adafruit-PN532 — and Adafruit BusIO — MIT —
+  https://github.com/adafruit/Adafruit_BusIO
+- The bundled offline MAC/OUI snapshot is derived from the IEEE OUI registry —
+  https://standards-oui.ieee.org/oui/oui.csv — and is included as a local
+  fallback for vendor lookup. The in-app update action can refresh it.
+
+When distributing an APK, retain this notice and all upstream license/notice
+files required by the corresponding dependencies.
+
+## Geolocation research references
+
+The independent BSSID geolocation client was informed by the publicly visible
+behavior and wire format documented by:
+
+- WaveDigger — GNU AGPL-3.0 — https://github.com/7wp81x/wavedigger
+- apple-corelocation-experiments — https://github.com/acheong08/apple-corelocation-experiments
+
+No WaveDigger or apple-corelocation-experiments source code is bundled here.
+The NRSuite implementation is a separate minimal Kotlin implementation.
+
+## Map rendering
+
+- Leaflet 1.9.4 — BSD 2-Clause — https://leafletjs.com/
+- OpenStreetMap tile imagery — © OpenStreetMap contributors, ODbL —
+  https://www.openstreetmap.org/copyright
+
+Leaflet is bundled under `app/src/main/assets/leaflet/`. Map tile usage must
+respect the selected tile provider's usage policy; the current prototype uses
+the public OpenStreetMap tile service.
+
+## IR protocol references
+
+The independent Kotlin `.ir` parser and protocol encoders were informed by
+publicly documented Flipper Zero IR protocol behavior and open-source IR
+transmitter implementations:
+
+- Flipper Zero firmware IR encoders/decoders — GPL-3.0 —
+  https://github.com/flipperdevices/flipperzero-firmware
+- android-ir-blaster IR protocol encoders — GPL-3.0 —
+  https://github.com/iodn/android-ir-blaster
+- Termux-IRBlaster — MIT — https://github.com/7wp81x/Termux-IRBlaster
+
+No application source code from these projects is bundled as a whole. NRSuite
+uses its own Kotlin parser/encoder implementation derived from the documented
+wire timing and field layouts.
