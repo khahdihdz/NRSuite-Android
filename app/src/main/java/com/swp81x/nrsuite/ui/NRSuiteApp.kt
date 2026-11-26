@@ -1,4 +1,5 @@
 package com.swp81x.nrsuite.ui
+import com.swp81x.nrsuite.R
 
 import android.app.Activity
 import android.app.PendingIntent

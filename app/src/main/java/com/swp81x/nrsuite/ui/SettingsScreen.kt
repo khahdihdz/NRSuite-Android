@@ -1,4 +1,5 @@
 package com.swp81x.nrsuite.ui
+import com.swp81x.nrsuite.R
 
 import com.swp81x.nrsuite.ui.components.NrAnimatedVisibility
 import com.swp81x.nrsuite.ui.components.NrDangerButton

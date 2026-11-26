@@ -1,4 +1,5 @@
 package com.swp81x.nrsuite.ui
+import com.swp81x.nrsuite.R
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
