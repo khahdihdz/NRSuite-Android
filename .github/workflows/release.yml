@@ -89,6 +89,31 @@ jobs:
             "$GITHUB_WORKSPACE/release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" \
             > keystore.properties
 
+      - name: Validate decoded keystore
+        # Chan doan: kiem tra ngay trong job release xem keystore giai ma
+        # co mo duoc khong, dung chinh cac secret ANDROID_SIGNING_* da dong
+        # bo. Giong buoc validate cua apksign: chi in kich thuoc, hash va
+        # ten alias, khong in gia tri secret.
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          pwd
+          ls -l release.jks
+          sha256sum release.jks
+          keytool -list -keystore release.jks -storepass "$STORE_PASSWORD" -alias "${KEY_ALIAS:-khahdihdz-release}"
+          keytool -importkeystore \
+            -srckeystore release.jks -srcstorepass "$STORE_PASSWORD" \
+            -srcalias "${KEY_ALIAS:-khahdihdz-release}" -srckeypass "$KEY_PASSWORD" \
+            -destkeystore /tmp/key-password-check.p12 -deststoretype PKCS12 \
+            -deststorepass "$STORE_PASSWORD" \
+            -destalias "${KEY_ALIAS:-khahdihdz-release}" -destkeypass "$KEY_PASSWORD" \
+            -noprompt
+          rm -f /tmp/key-password-check.p12
+          echo "Decoded keystore and all signing secrets validated."
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
