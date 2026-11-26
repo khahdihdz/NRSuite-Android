@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # Tag tao qua giao dien tao release tren web khong phai luc nao cung
+  # phat su kien push (lan tao lai tag v1.0.0-vi.1 tren commit 745bfa1
+  # da khong kich hoat workflow), nen them trigger release de viec
+  # xuat ban release luon chay workflow nay. workflow_dispatch de
+  # chay tay khi can chay lai.
+  release:
+    types: [published]
+  workflow_dispatch:
 
 permissions:
   contents: write
