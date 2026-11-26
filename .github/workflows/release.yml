@@ -87,25 +87,34 @@ jobs:
           test -s release.jks
 
       - name: Create release signing config
+        # QUAN TRONG: keystore nay la dinh dang PKCS12 (keytool mac dinh
+        # tu JDK 9). PKCS12 khong ho tro mat khau key khac mat khau store:
+        # keytool bo qua -keypass rieng va ma hoa private key bang chinh
+        # mat khau store. Vi vay keyPassword PHAI bang storePassword.
+        # Dung ANDROID_SIGNING_KEY_PASSWORD (dang sai so voi store) khien
+        # Gradle loi "Get Key failed: Given final block not properly padded".
+        # Buoc validate cua apksign cung co diem mu tuong tu: no dung
+        # keytool -importkeystore de kiem tra key password, nhung voi PKCS12
+        # keytool bo qua -srckeypass nen van pass du key password sai.
         env:
           STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           set -eu
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
-            "$GITHUB_WORKSPACE/release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" \
+            "$GITHUB_WORKSPACE/release.jks" "$STORE_PASSWORD" "$KEY_ALIAS" "$STORE_PASSWORD" \
             > keystore.properties
 
       - name: Validate decoded keystore
-        # Chan doan: kiem tra ngay trong job release xem keystore giai ma
-        # co mo duoc khong, dung chinh cac secret ANDROID_SIGNING_* da dong
-        # bo. Giong buoc validate cua apksign: chi in kich thuoc, hash va
-        # ten alias, khong in gia tri secret.
+        # Kiem tra ngay trong job release xem keystore giai ma co mo duoc
+        # khong, dung chinh cac secret ANDROID_SIGNING_* da dong bo.
+        # Chi in kich thuoc, hash va ten alias, khong in gia tri secret.
+        # Luu y: kiem tra mat khau key bang mat khau store (mat khau that
+        # su cua key trong keystore PKCS12 nay), khong dung secret
+        # ANDROID_SIGNING_KEY_PASSWORD vi no dang sai.
         env:
           STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           pwd
@@ -114,10 +123,10 @@ jobs:
           keytool -list -keystore release.jks -storepass "$STORE_PASSWORD" -alias "${KEY_ALIAS:-khahdihdz-release}"
           keytool -importkeystore \
             -srckeystore release.jks -srcstorepass "$STORE_PASSWORD" \
-            -srcalias "${KEY_ALIAS:-khahdihdz-release}" -srckeypass "$KEY_PASSWORD" \
+            -srcalias "${KEY_ALIAS:-khahdihdz-release}" -srckeypass "$STORE_PASSWORD" \
             -destkeystore /tmp/key-password-check.p12 -deststoretype PKCS12 \
             -deststorepass "$STORE_PASSWORD" \
-            -destalias "${KEY_ALIAS:-khahdihdz-release}" -destkeypass "$KEY_PASSWORD" \
+            -destalias "${KEY_ALIAS:-khahdihdz-release}" -destkeypass "$STORE_PASSWORD" \
             -noprompt
           rm -f /tmp/key-password-check.p12
           echo "Decoded keystore and all signing secrets validated."
