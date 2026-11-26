@@ -1,0 +1,1785 @@
+package com.swp81x.nrsuite.ui
+
+import com.swp81x.nrsuite.ui.components.NrAnimatedVisibility
+import com.swp81x.nrsuite.ui.components.NrDangerButton
+import com.swp81x.nrsuite.ui.components.NrPrimaryButton
+import com.swp81x.nrsuite.ui.components.NrQuietButton
+import com.swp81x.nrsuite.ui.components.NrSecondaryButton
+import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.view.WindowManager
+import android.content.IntentFilter
+import android.hardware.usb.UsbDevice
+import android.hardware.usb.UsbManager
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.swp81x.nrsuite.ui.theme.LogColorError
+import com.swp81x.nrsuite.ui.theme.LogColorInfo
+import com.swp81x.nrsuite.ui.theme.LogColorSuccess
+import com.swp81x.nrsuite.ui.theme.LogColorUsb
+import com.swp81x.nrsuite.ui.theme.NrAccentColor
+import com.swp81x.nrsuite.ui.theme.previewColor
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bluetooth
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeveloperBoard
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FilterCenterFocus
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SettingsInputAntenna
+import androidx.compose.material.icons.filled.SettingsRemote
+import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Usb
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import com.swp81x.nrsuite.core.history.HistoryLevel
+import com.swp81x.nrsuite.core.history.HistoryEntry
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import com.swp81x.nrsuite.BuildConfig
+import com.swp81x.nrsuite.MainViewModel
+import com.swp81x.nrsuite.NrSuiteApplication
+import com.swp81x.nrsuite.core.defense.OuiRule
+import com.swp81x.nrsuite.core.oui.OuiDatabaseStatus
+import com.swp81x.nrsuite.core.defense.OuiRuleAction
+import com.swp81x.nrsuite.core.defense.normalizeOuiPrefix
+import com.swp81x.nrsuite.core.session.ConnectionState
+import com.swp81x.nrsuite.core.update.AppUpdateInfo
+import com.swp81x.nrsuite.core.update.FirmwareAssetDownloadState
+import com.swp81x.nrsuite.core.update.AppUpdateDownloadState
+import com.swp81x.nrsuite.core.update.FirmwareUpdateInfo
+import com.swp81x.nrsuite.core.update.ReleaseInfo
+import com.swp81x.nrsuite.core.update.compatibleFirmwareAssets
+import com.swp81x.nrsuite.core.update.FIRMWARE_BOARD_FAMILIES
+import com.swp81x.nrsuite.core.update.firmwareBoardFamilyForId
+import com.swp81x.nrsuite.core.update.firmwareBoardFamilyForTarget
+import com.swp81x.nrsuite.core.update.firmwareBoardProfileForTarget
+import com.swp81x.nrsuite.core.update.firmwareBoardProfilesForFamily
+import com.swp81x.nrsuite.core.update.firmwareAssetsForFamily
+import com.swp81x.nrsuite.core.update.firmwareChipFromAssetName
+import com.swp81x.nrsuite.core.update.firmwareChipFromFirmwareName
+import com.swp81x.nrsuite.core.update.firmwareHardwareChip
+import com.swp81x.nrsuite.core.update.isAlphaOrBetaRelease
+import com.swp81x.nrsuite.core.usb.UsbSerialDevice
+import com.swp81x.nrsuite.ui.components.ModuleCard
+import com.swp81x.nrsuite.ui.components.ModuleCardSpec
+import com.swp81x.nrsuite.ui.components.NrFilterChip
+import com.swp81x.nrsuite.ui.components.SavedItemDropdown
+import com.swp81x.nrsuite.ui.components.StatusIndicator
+import com.swp81x.nrsuite.ui.theme.NrAccent
+import com.swp81x.nrsuite.ui.theme.NrThemeMode
+import com.swp81x.nrsuite.ui.theme.NrOutline
+import com.swp81x.nrsuite.ui.theme.NrOnSurface
+import com.swp81x.nrsuite.ui.theme.NrOnSurfaceVariant
+import com.swp81x.nrsuite.ui.theme.NrSurface
+import com.swp81x.nrsuite.ui.theme.NrSurfaceVariant
+import com.swp81x.nrsuite.ui.theme.StatusAmber
+import com.swp81x.nrsuite.ui.theme.StatusGreen
+import com.swp81x.nrsuite.ui.theme.StatusNeutral
+import com.swp81x.nrsuite.ui.theme.StatusRed
+import kotlinx.coroutines.launch
+import org.json.JSONObject
+import com.swp81x.nrsuite.core.log.LogEntry
+import com.swp81x.nrsuite.core.log.LogLevel
+import com.swp81x.nrsuite.ui.theme.LogBgError
+
+private fun sanitizeFirmwareFileNamePart(raw: String): String =
+    raw.replace(Regex("[^A-Za-z0-9._-]"), "_")
+
+@Composable
+internal fun SettingsScreen(
+    connectionState: ConnectionState,
+    exportDirectoryName: String,
+    storageAccessIssue: String? = null,
+    firmwareFileName: String?,
+    firmwareFlashSize: Long,
+    firmwareFlashing: Boolean,
+    firmwareFlashProgress: Int,
+    firmwareFlashStatus: String?,
+    devices: List<UsbSerialDevice>,
+    usbManager: UsbManager,
+    permissionRevision: Int,
+    selectedFlashTarget: UsbSerialDevice?,
+    selectedFlashTargetChip: String? = null,
+    selectedFlashTargetFirmwareVersion: String? = null,
+    onChooseExportDirectory: () -> Unit,
+    onChooseFirmware: () -> Unit,
+    onClearFirmware: () -> Unit,
+    onRefreshDevices: () -> Unit,
+    onRequestPermission: (UsbDevice) -> Unit,
+    onSelectFlashTarget: (UsbDevice) -> Unit,
+    onStartFirmwareFlash: (targetChip: String, skipReset: Boolean, eraseBeforeFlash: Boolean) -> Unit,
+    firmwareManualRecovery: Boolean = false,
+    onArmManualFirmwareRecovery: (targetChip: String) -> Unit = {},
+    onFlashManualFirmwareNow: () -> Unit = {},
+    onFlashManualFirmwareWithReset: () -> Unit = {},
+    onDisarmManualFirmwareRecovery: () -> Unit = {},
+    firmwareReleases: List<ReleaseInfo> = emptyList(),
+    firmwareAssetDownload: FirmwareAssetDownloadState = FirmwareAssetDownloadState.Idle,
+    onDownloadFirmwareAsset: (releaseTag: String, assetName: String) -> Unit = { _, _ -> },
+    onPrepareFirmwareAsset: (releaseTag: String, assetName: String) -> Unit = { _, _ -> },
+    ouiRules: List<OuiRule> = emptyList(),
+    onAddOuiRule: (ouiPrefix: String, label: String, action: OuiRuleAction) -> Unit = { _, _, _ -> },
+    onDeleteOuiRule: (id: String) -> Unit = {},
+    ouiDatabaseStatus: OuiDatabaseStatus = OuiDatabaseStatus.NotDownloaded,
+    ouiDatabaseProgress: Float? = null,
+    onDownloadOuiDatabase: () -> Unit = {},
+    autoUpdateCheck: Boolean = true,
+    excludeBetaReleases: Boolean = true,
+    updateCheckInProgress: Boolean = false,
+    appUpdate: AppUpdateInfo? = null,
+    appUpdateDownload: AppUpdateDownloadState = AppUpdateDownloadState.Idle,
+    firmwareUpdate: FirmwareUpdateInfo? = null,
+    updateError: String? = null,
+    onAutoUpdateCheckChange: (Boolean) -> Unit = {},
+    onExcludeBetaReleasesChange: (Boolean) -> Unit = {},
+    onCheckForUpdates: () -> Unit = {},
+    onAutoCheckForUpdates: () -> Unit = {},
+    onDownloadAppUpdate: () -> Unit = {},
+    onInstallAppUpdate: () -> Unit = {},
+    onDownloadFirmwareUpdate: () -> Unit = {},
+    onOpenFirmwareFlasher: () -> Unit = {},
+    onClearUpdateDownloads: () -> Unit = {},
+    themeMode: NrThemeMode = NrThemeMode.DARK,
+    onThemeModeChange: (NrThemeMode) -> Unit = {},
+    accentColor: NrAccentColor = NrAccentColor.LIME,
+    onAccentColorChange: (NrAccentColor) -> Unit = {},
+    flasherOnly: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    val currentFirmware = (connectionState as? ConnectionState.Connected)?.firmwareVersion
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val currentAppVersion = remember(context) {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull() ?: "unknown"
+    }
+    val availableFirmwareReleases = remember(firmwareReleases, excludeBetaReleases) {
+        if (excludeBetaReleases) {
+            firmwareReleases.filterNot { it.isAlphaOrBetaRelease() }
+        } else {
+            firmwareReleases
+        }
+    }
+    val accent = MaterialTheme.colorScheme.primary
+    val connectedInfo = connectionState as? ConnectionState.Connected
+    val chip = connectedInfo?.chip
+    val diagnosticChipHint = (connectionState as? ConnectionState.Failed)
+        ?.diagnostic
+        ?.detectedChip
+    var selectedTargetChip by remember {
+        mutableStateOf(diagnosticChipHint ?: chip ?: "")
+    }
+    val targetHasPermission = selectedFlashTarget?.let { usbManager.hasPermission(it.device) } == true
+    @Suppress("UNUSED_EXPRESSION")
+    permissionRevision
+    var manualBootloader by remember { mutableStateOf(false) }
+    var advancedExpanded by remember { mutableStateOf(false) }
+    var showFlashConfirm by remember { mutableStateOf(false) }
+    var selectedFirmwareReleaseTag by remember { mutableStateOf<String?>(null) }
+    var selectedFirmwareAssetName by remember { mutableStateOf<String?>(null) }
+    var firmwareSourceRemote by remember { mutableStateOf(true) }
+    val localFirmwareChip = firmwareChipFromFirmwareName(firmwareFileName)
+    val flashTargetIdentity = selectedFlashTarget?.device?.let { device ->
+        runCatching {
+            listOf(
+                device.deviceId,
+                device.deviceName,
+                device.vendorId,
+                device.productId,
+                device.productName.orEmpty(),
+                device.serialNumber.orEmpty(),
+            ).joinToString("|")
+        }.getOrElse { device.deviceId.toString() }
+    }
+    var previousFlashTargetIdentity by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(
+        flashTargetIdentity,
+        selectedFlashTargetChip,
+        diagnosticChipHint,
+        chip,
+    ) {
+        when {
+            flashTargetIdentity == null -> {
+                // A disconnected target must not leave its chip/firmware
+                // selection attached to the next board that is plugged in.
+                if (previousFlashTargetIdentity != null) {
+                    selectedTargetChip = ""
+                    selectedFirmwareAssetName = null
+                }
+                previousFlashTargetIdentity = null
+            }
+            flashTargetIdentity != previousFlashTargetIdentity -> {
+                previousFlashTargetIdentity = flashTargetIdentity
+                selectedTargetChip = selectedFlashTargetChip
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { target ->
+                        firmwareBoardFamilyForTarget(target)?.universalTarget ?: target
+                    }
+                    ?: ""
+                selectedFirmwareAssetName = null
+            }
+            !selectedFlashTargetChip.isNullOrBlank() &&
+                firmwareBoardFamilyForTarget(selectedFlashTargetChip) !=
+                firmwareBoardFamilyForTarget(selectedTargetChip) -> {
+                // The selected bootloader target later identified its chip.
+                // Keep the safe universal profile for that family; never infer
+                // a specific flash/PSRAM variant from the running image alone.
+                selectedTargetChip = firmwareBoardFamilyForTarget(selectedFlashTargetChip)
+                    ?.universalTarget
+                    ?: selectedFlashTargetChip
+                selectedFirmwareAssetName = null
+            }
+        }
+    }
+    val selectedBoardProfile = firmwareBoardProfileForTarget(selectedTargetChip)
+    val selectedBoardFamily = selectedBoardProfile?.family
+    val selectedImageChip = localFirmwareChip
+    val targetChipMismatch = selectedImageChip != null &&
+        selectedTargetChip.isNotBlank() &&
+        !selectedImageChip.equals(selectedTargetChip, ignoreCase = true)
+    val selectedHardwareChip = firmwareHardwareChip(selectedTargetChip)
+    val reportedHardwareChip = firmwareHardwareChip(selectedFlashTargetChip)
+    val connectedChipMismatch = !selectedFlashTargetChip.isNullOrBlank() &&
+        selectedTargetChip.isNotBlank() &&
+        !selectedHardwareChip.isNullOrBlank() &&
+        !reportedHardwareChip.isNullOrBlank() &&
+        !selectedHardwareChip.equals(reportedHardwareChip, ignoreCase = true)
+    val expectedRemoteFirmwareFile = selectedFirmwareReleaseTag
+        ?.takeIf { it.isNotBlank() }
+        ?.let { releaseTag ->
+            selectedFirmwareAssetName
+                ?.takeIf { it.isNotBlank() }
+                ?.let { assetName ->
+                    "${sanitizeFirmwareFileNamePart(releaseTag)}-" +
+                        sanitizeFirmwareFileNamePart(assetName)
+                }
+        }
+    val firmwareReadyForFlash = if (firmwareSourceRemote) {
+        expectedRemoteFirmwareFile != null &&
+            firmwareFileName == expectedRemoteFirmwareFile
+    } else {
+        firmwareFileName != null
+    }
+
+    LaunchedEffect(firmwareAssetDownload) {
+        if (firmwareAssetDownload is FirmwareAssetDownloadState.Downloaded) {
+            firmwareSourceRemote = true
+        }
+    }
+    LaunchedEffect(
+        firmwareSourceRemote,
+        selectedFirmwareReleaseTag,
+        selectedFirmwareAssetName,
+        firmwareFlashing,
+    ) {
+        if (firmwareSourceRemote && !firmwareFlashing) {
+            val tag = selectedFirmwareReleaseTag
+            val asset = selectedFirmwareAssetName
+            if (!tag.isNullOrBlank() && !asset.isNullOrBlank()) {
+                onPrepareFirmwareAsset(tag, asset)
+            }
+        }
+    }
+    LaunchedEffect(availableFirmwareReleases, selectedTargetChip) {
+        val compatibleReleases = if (selectedTargetChip.isBlank()) {
+            availableFirmwareReleases
+        } else {
+            availableFirmwareReleases.filter {
+                it.compatibleFirmwareAssets(selectedTargetChip).isNotEmpty()
+            }
+        }
+        val release = compatibleReleases.firstOrNull { it.tag == selectedFirmwareReleaseTag }
+            ?: compatibleReleases.firstOrNull()
+        selectedFirmwareReleaseTag = release?.tag
+
+        // Do not silently choose the first asset when the target chip is
+        // unknown: that can leave a firmware image from the previous board
+        // selected after a re-enumeration.
+        val selectionAssets = selectedTargetChip
+            .takeIf { it.isNotBlank() }
+            ?.let { release?.compatibleFirmwareAssets(it).orEmpty() }
+            .orEmpty()
+        selectedFirmwareAssetName =
+            selectionAssets.firstOrNull { it.name == selectedFirmwareAssetName }?.name
+                ?: selectionAssets.firstOrNull()?.name
+    }
+    LaunchedEffect(devices) {
+        if (devices.size == 1 &&
+            selectedFlashTarget == null &&
+            !firmwareManualRecovery &&
+            usbManager.hasPermission(devices[0].device)
+        ) {
+            onSelectFlashTarget(devices[0].device)
+        }
+    }
+
+    LaunchedEffect(flasherOnly, autoUpdateCheck) {
+        if (flasherOnly && autoUpdateCheck) {
+            onAutoCheckForUpdates()
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        if (!flasherOnly) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        ) {
+            Column(Modifier.padding(14.dp)) {
+                Text("Storage access", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = if (exportDirectoryName == "Not configured") {
+                        "No root folder selected"
+                    } else {
+                        exportDirectoryName
+                    },
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                    color = NrOnSurfaceVariant,
+                )
+                if (storageAccessIssue != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = storageAccessIssue,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StatusAmber,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                NrPrimaryButton(
+                    text = if (storageAccessIssue == null) {
+                        "Grant storage access"
+                    } else {
+                        "Re-grant storage access"
+                    },
+                    onClick = onChooseExportDirectory,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "Android uses the system folder picker instead of a broad storage permission. " +
+                        "Choose a writable folder; NRSuite creates Pcap/, Logs/, Portals/, and DuckyEditor/ inside it.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NrOnSurfaceVariant,
+                )
+            }
+        }
+        }
+
+        if (flasherOnly) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        ) {
+            Column(Modifier.padding(14.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val flashFailed = firmwareFlashStatus?.startsWith("Flash failed") == true
+                    StatusIndicator(
+                        label = when {
+                            firmwareFlashing -> "Running"
+                            flashFailed -> "Failed"
+                            firmwareFlashProgress >= 100 -> "Complete"
+                            else -> "Idle"
+                        },
+                        color = when {
+                            firmwareFlashing || firmwareFlashProgress >= 100 -> StatusGreen
+                            flashFailed -> StatusRed
+                            else -> StatusNeutral
+                        },
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Target device",
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    NrQuietButton(
+                        text = stringResource(R.string.action_refresh),
+                        onClick = onRefreshDevices,
+                        enabled = !firmwareFlashing,
+                        compact = true,
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                if (devices.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.settings_no_flash_device),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StatusAmber,
+                    )
+                } else {
+                    val flashDeviceIds = devices.map { it.device.deviceId.toString() }
+                    SavedItemDropdown(
+                        label = "Target device",
+                        selectedName = selectedFlashTarget?.device?.deviceId?.toString(),
+                        selectedDisplayName = selectedFlashTarget?.displayName
+                            ?: "Select a device",
+                        names = flashDeviceIds,
+                        enabled = !firmwareFlashing,
+                        sortNames = false,
+                        selectedSupportingTextColor = when {
+                            selectedFlashTarget == null && devices.isNotEmpty() -> StatusGreen
+                            selectedFlashTarget != null &&
+                                usbManager.hasPermission(selectedFlashTarget.device) -> StatusGreen
+                            else -> StatusAmber
+                        },
+                        itemLabel = { id ->
+                            devices.firstOrNull { it.device.deviceId.toString() == id }
+                                ?.displayName ?: "Unknown USB device"
+                        },
+                        itemSupportingText = { id ->
+                            val entry = devices.firstOrNull {
+                                it.device.deviceId.toString() == id
+                            }
+                            when {
+                                entry == null -> "No longer attached"
+                                usbManager.hasPermission(entry.device) -> "USB permission granted"
+                                else -> "USB permission required"
+                            }
+                        },
+                        onSelect = { id ->
+                            val entry = devices.firstOrNull {
+                                it.device.deviceId.toString() == id
+                            } ?: return@SavedItemDropdown
+                            if (usbManager.hasPermission(entry.device)) {
+                                onSelectFlashTarget(entry.device)
+                            } else {
+                                onRequestPermission(entry.device)
+                            }
+                        },
+                    )
+                    selectedFlashTarget?.let { entry ->
+                        if (!usbManager.hasPermission(entry.device)) {
+                            Spacer(Modifier.height(6.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "USB permission required",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = StatusAmber,
+                                    modifier = Modifier.weight(1f),
+                                )
+                                NrSecondaryButton(
+                                    text = stringResource(R.string.action_grant_permission),
+                                    onClick = { onRequestPermission(entry.device) },
+                                    enabled = !firmwareFlashing,
+                                    compact = true,
+                                )
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = "Target board",
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(6.dp))
+                SavedItemDropdown(
+                    label = "Family",
+                    selectedName = selectedBoardFamily?.id,
+                    selectedDisplayName = selectedBoardFamily?.displayName ?: "Select a board family",
+                    names = FIRMWARE_BOARD_FAMILIES.map { it.id },
+                    enabled = !firmwareFlashing,
+                    sortNames = false,
+                    itemLabel = { id -> firmwareBoardFamilyForId(id)?.displayName ?: id },
+                    showItemCount = false,
+                    onSelect = { id ->
+                        val family = firmwareBoardFamilyForId(id) ?: return@SavedItemDropdown
+                        selectedTargetChip = family.universalTarget
+                        selectedFirmwareAssetName = null
+                    },
+                )
+                connectedInfo?.let { reported ->
+                    Spacer(Modifier.height(6.dp))
+                    val flashText = reported.flashSize
+                        ?.let { "${it / (1024L * 1024L)} MB flash" }
+                        ?: "flash size unknown"
+                    val psramText = when {
+                        reported.psramTotal == null -> "PSRAM unknown"
+                        reported.psramTotal <= 0L -> "PSRAM not initialized"
+                        else -> "${reported.psramTotal / (1024L * 1024L)} MB PSRAM"
+                    }
+                    Text(
+                        text = "Current firmware reports: ${reported.chip ?: "unknown chip"} · " +
+                            "$flashText · $psramText",
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        color = NrOnSurfaceVariant,
+                    )
+                    if (selectedBoardProfile?.expectsPsram == true &&
+                        reported.psramTotal != null &&
+                        reported.psramTotal <= 0L
+                    ) {
+                        Spacer(Modifier.height(3.dp))
+                        Text(
+                            text = "Selected profile expects PSRAM, but the running firmware " +
+                                "reports none. The current image may not enable PSRAM; confirm " +
+                                "the physical module before flashing.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    text = "Firmware image",
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    NrFilterChip(
+                        selected = firmwareSourceRemote,
+                        onClick = { firmwareSourceRemote = true },
+                        enabled = !firmwareFlashing,
+                        label = "Remote",
+                    )
+                    NrFilterChip(
+                        selected = !firmwareSourceRemote,
+                        onClick = { firmwareSourceRemote = false },
+                        enabled = !firmwareFlashing,
+                        label = "Local file",
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+
+                if (!firmwareSourceRemote) {
+                    Text(
+                        text = if (firmwareFileName != null) {
+                            "${localFirmwareChip ?: "Unknown target chip"} firmware" +
+                                if (firmwareFlashSize > 0) " · ${firmwareFlashSize / 1024} KB" else ""
+                        } else {
+                            "No local firmware .bin selected"
+                        },
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                        color = if (firmwareFileName == null) StatusAmber else NrOnSurface,
+                    )
+                    BoardProfileInfo(
+                        profile = firmwareChipFromFirmwareName(firmwareFileName)
+                            ?.let { firmwareBoardProfileForTarget(it) },
+                        fileName = firmwareFileName,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (firmwareFileName == null) {
+                        NrPrimaryButton(
+                            text = stringResource(R.string.action_choose_firmware),
+                            onClick = onChooseFirmware,
+                            enabled = targetHasPermission && !firmwareFlashing,
+                        )
+                    } else {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            NrSecondaryButton(
+                                text = stringResource(R.string.action_change),
+                                onClick = onChooseFirmware,
+                                enabled = targetHasPermission && !firmwareFlashing,
+                                compact = true,
+                            )
+                            NrQuietButton(
+                                text = stringResource(R.string.action_clear),
+                                onClick = onClearFirmware,
+                                enabled = !firmwareFlashing,
+                                compact = true,
+                            )
+                        }
+                    }
+                    if (!targetHasPermission) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Select a device above to choose a local firmware.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                    }
+                } else {
+                    if (updateCheckInProgress) {
+                        Text(
+                            text = "Checking for updates…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    } else if (availableFirmwareReleases.isEmpty()) {
+                        Text(
+                            text = "No firmware releases cached yet.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        NrSecondaryButton(
+                            text = "Check now",
+                            onClick = onCheckForUpdates,
+                            enabled = autoUpdateCheck,
+                            compact = true,
+                        )
+                        if (updateError != null) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = updateError,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusRed,
+                            )
+                        }
+                    } else {
+                        val selectedRelease = availableFirmwareReleases.firstOrNull {
+                            it.tag == selectedFirmwareReleaseTag
+                        }
+                        val allAssets = selectedRelease?.assets.orEmpty()
+                        val selectedFamilyId = selectedBoardFamily?.id
+                        val assetCandidates = firmwareAssetsForFamily(
+                            assets = allAssets,
+                            family = selectedBoardFamily,
+                        )
+                        val selectedAsset = assetCandidates.firstOrNull {
+                            it.name == selectedFirmwareAssetName
+                        }
+
+                        SavedItemDropdown(
+                            label = "Firmware version",
+                            selectedName = selectedRelease?.tag,
+                            names = availableFirmwareReleases.map { it.tag },
+                            enabled = !firmwareFlashing,
+                            sortNames = false,
+                            itemSupportingText = { tag ->
+                                val release = availableFirmwareReleases.firstOrNull { it.tag == tag }
+                                val isLatest = tag == availableFirmwareReleases.firstOrNull()?.tag
+                                val compatible = release
+                                    ?.compatibleFirmwareAssets(selectedTargetChip)
+                                    ?.isNotEmpty() == true
+                                when {
+                                    selectedTargetChip.isBlank() && isLatest -> "Latest"
+                                    selectedTargetChip.isBlank() -> "Select an asset to set the chip"
+                                    isLatest && compatible -> "Latest · compatible with $selectedTargetChip"
+                                    isLatest -> "Latest"
+                                    compatible -> "Compatible with $selectedTargetChip"
+                                    else -> "No $selectedTargetChip asset"
+                                }
+                            },
+                            onSelect = { tag ->
+                                selectedFirmwareReleaseTag = tag
+                                selectedFirmwareAssetName = null
+                            },
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+                        SavedItemDropdown(
+                            label = "Firmware asset / board variant",
+                            selectedName = selectedAsset?.name,
+                            selectedDisplayName = selectedAsset?.let { asset ->
+                                firmwareChipFromAssetName(asset.name)
+                                    ?.let {
+                                        firmwareBoardProfileForTarget(it)?.variantLabel ?: it
+                                    }
+                                    ?: "Select firmware asset"
+                            },
+                            names = assetCandidates.map { it.name },
+                            enabled = !firmwareFlashing && assetCandidates.isNotEmpty(),
+                            sortNames = false,
+                            itemLabel = { name ->
+                                firmwareChipFromAssetName(name)
+                                    ?.let {
+                                        firmwareBoardProfileForTarget(it)?.variantLabel ?: it
+                                    }
+                                    ?: "Unknown board variant"
+                            },
+                            onSelect = { name ->
+                                selectedFirmwareAssetName = name
+                                firmwareChipFromAssetName(name)?.let { selectedTargetChip = it }
+                            },
+                        )
+
+                        if (selectedFamilyId == null) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Select a target board family first.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusAmber,
+                            )
+                        } else if (assetCandidates.isEmpty()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "This release has no firmware assets for " +
+                                    "${selectedBoardFamily?.displayName ?: "the selected family"}.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusAmber,
+                            )
+                        } else if (selectedAsset == null) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Select a firmware asset; its variant also selects the " +
+                                    "board profile.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusAmber,
+                            )
+                        }
+                        BoardProfileInfo(selectedBoardProfile, selectedAsset?.name)
+
+                        Spacer(Modifier.height(8.dp))
+                        val downloadState = firmwareAssetDownload
+                        val downloaded = downloadState is FirmwareAssetDownloadState.Downloaded &&
+                            expectedRemoteFirmwareFile != null &&
+                            firmwareFileName == expectedRemoteFirmwareFile
+                        NrPrimaryButton(
+                            text = when (downloadState) {
+                                is FirmwareAssetDownloadState.Downloading ->
+                                    downloadState.percent?.let {
+                                        "Downloading ${it.toInt()}%"
+                                    } ?: stringResource(R.string.oui_downloading)
+                                is FirmwareAssetDownloadState.Downloaded ->
+                                    if (downloaded) "Downloaded" else "Download selected firmware"
+                                is FirmwareAssetDownloadState.Failed -> stringResource(R.string.oui_retry_download)
+                                FirmwareAssetDownloadState.Idle -> "Download selected firmware"
+                            },
+                            onClick = {
+                                val release = selectedRelease ?: return@NrPrimaryButton
+                                val asset = selectedAsset ?: return@NrPrimaryButton
+                                selectedFirmwareAssetName = asset.name
+                                firmwareChipFromAssetName(asset.name)?.let {
+                                    selectedTargetChip = it
+                                }
+                                onDownloadFirmwareAsset(release.tag, asset.name)
+                            },
+                            enabled = selectedRelease != null &&
+                                selectedAsset != null &&
+                                downloadState !is FirmwareAssetDownloadState.Downloading &&
+                                !downloaded &&
+                                !firmwareFlashing,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        if (downloadState is FirmwareAssetDownloadState.Failed) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = downloadState.message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusRed,
+                            )
+                        }
+                        if (downloaded) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Firmware ready to flash. Use the button below.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = StatusGreen,
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(12.dp))
+
+                if (!firmwareSourceRemote) {
+                    Text(
+                        text = "Target check",
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    val imageChip = localFirmwareChip
+                    val targetChipLabel = selectedTargetChip.ifBlank { "unknown" }
+                    Text(
+                        text = "Image: ${imageChip ?: "unknown"} · Target: $targetChipLabel",
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        color = when {
+                            imageChip == null || selectedTargetChip.isBlank() -> StatusAmber
+                            targetChipMismatch -> StatusRed
+                            else -> StatusGreen
+                        },
+                    )
+                    if (imageChip == null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Could not infer the chip from the firmware filename.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                    }
+                    if (targetChipMismatch) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Image and target chip do not match.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusRed,
+                        )
+                    }
+                }
+                Spacer(Modifier.height(6.dp))
+                NrSecondaryButton(
+                    text = if (advancedExpanded) stringResource(R.string.settings_hide_advanced_options) else stringResource(R.string.settings_advanced_options),
+                    onClick = { advancedExpanded = !advancedExpanded },
+                    enabled = !firmwareFlashing,
+                    leadingIcon = if (advancedExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                NrAnimatedVisibility(visible = advancedExpanded) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(
+                            checked = manualBootloader,
+                            onCheckedChange = { manualBootloader = it },
+                            enabled = !firmwareFlashing,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.settings_skip_autoreset),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NrOnSurfaceVariant,
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "Use this only if the board is already in ROM bootloader mode. " +
+                            "Otherwise hold BOOT, tap RESET, then enable this option and flash.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                if (connectedChipMismatch) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "Selected firmware targets $selectedTargetChip, " +
+                            "but the device reports $selectedFlashTargetChip.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StatusRed,
+                    )
+                }
+                Spacer(Modifier.height(10.dp))
+                NrPrimaryButton(
+                    text = if (firmwareFlashing) stringResource(R.string.status_flashing) else stringResource(R.string.action_flash_firmware),
+                    onClick = { showFlashConfirm = true },
+                    enabled = selectedFlashTarget != null &&
+                        targetHasPermission &&
+                        firmwareReadyForFlash &&
+                        selectedTargetChip.isNotBlank() &&
+                        !targetChipMismatch &&
+                        !connectedChipMismatch &&
+                        !firmwareFlashing,
+                )
+                if (showFlashConfirm) {
+                    AlertDialog(
+                        onDismissRequest = { showFlashConfirm = false },
+                        title = { Text(stringResource(R.string.dialog_flash_title)) },
+                        text = {
+                            Text(
+                                stringResource(
+                                    R.string.dialog_flash_text,
+                                    selectedFlashTarget?.displayName ?: "the device",
+                                ),
+                                color = NrOnSurfaceVariant,
+                            )
+                        },
+                        confirmButton = {
+                            NrDangerButton(
+                                text = stringResource(R.string.action_flash_now),
+                                onClick = {
+                                    showFlashConfirm = false
+                                    onStartFirmwareFlash(selectedTargetChip, manualBootloader, false)
+                                },
+                                filled = true,
+                            )
+                        },
+                        dismissButton = {
+                            NrQuietButton(
+                                text = stringResource(R.string.action_cancel),
+                                onClick = { showFlashConfirm = false },
+                            )
+                        },
+                    )
+                }
+                if (firmwareFlashing || firmwareFlashProgress > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    LinearProgressIndicator(
+                        progress = { firmwareFlashProgress / 100f },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = firmwareFlashStatus ?: stringResource(R.string.status_preparing),
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        color = if (firmwareFlashStatus?.startsWith("Flash failed") == true) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            NrOnSurfaceVariant
+                        },
+                    )
+                    if (firmwareFlashing) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = "Flashing continues in the background. " +
+                                "Follow progress in the NRSuite notification.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NrOnSurfaceVariant,
+                        )
+                    }
+                }
+
+                if (firmwareManualRecovery) {
+                    Spacer(Modifier.height(10.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = NrSurfaceVariant),
+                        border = BorderStroke(0.5.dp, StatusAmber),
+                        shape = RoundedCornerShape(10.dp),
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(
+                                text = "Manual bootloader recovery armed",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Hold BOOT, tap RESET (or unplug/replug while holding BOOT), " +
+                                    "then release BOOT. Select the previous device from the Target " +
+                                    "device dropdown above. Flashing starts automatically once it is selected.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = NrOnSurfaceVariant,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text = "Select the previous device",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = StatusGreen,
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            NrQuietButton(
+                                text = "Try automatic DTR/RTS reset instead",
+                                onClick = onFlashManualFirmwareWithReset,
+                                enabled = !firmwareFlashing,
+                            )
+                        }
+                    }
+                } else if (!firmwareFlashing &&
+                    firmwareFlashStatus?.startsWith("Flash failed") == true
+                ) {
+                    Spacer(Modifier.height(10.dp))
+                    NrSecondaryButton(
+                        text = "Use manual bootloader",
+                        onClick = { onArmManualFirmwareRecovery(selectedTargetChip) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = selectedTargetChip.isNotBlank() && !targetChipMismatch,
+                    )
+                }
+            }
+        }
+        }
+
+        if (!flasherOnly) {
+
+        OuiDatabaseCard(
+            status = ouiDatabaseStatus,
+            progress = ouiDatabaseProgress,
+            onDownload = onDownloadOuiDatabase,
+        )
+
+        UpdatesCard(
+            currentVersion = currentAppVersion,
+            autoUpdateCheck = autoUpdateCheck,
+            excludeBetaReleases = excludeBetaReleases,
+            updateCheckInProgress = updateCheckInProgress,
+            appUpdate = appUpdate,
+            appUpdateDownload = appUpdateDownload,
+            firmwareUpdate = firmwareUpdate,
+            firmwareAssetDownload = firmwareAssetDownload,
+            updateError = updateError,
+            onAutoUpdateCheckChange = onAutoUpdateCheckChange,
+            onExcludeBetaReleasesChange = onExcludeBetaReleasesChange,
+            onCheckForUpdates = onCheckForUpdates,
+            onDownloadAppUpdate = onDownloadAppUpdate,
+            onInstallAppUpdate = onInstallAppUpdate,
+            onDownloadFirmwareUpdate = onDownloadFirmwareUpdate,
+            onOpenFirmwareFlasher = onOpenFirmwareFlasher,
+            onClearUpdateDownloads = onClearUpdateDownloads,
+        )
+
+        AppearanceCard(
+            themeMode = themeMode,
+            onThemeModeChange = onThemeModeChange,
+            accentColor = accentColor,
+            onAccentColorChange = onAccentColorChange,
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        ) {
+            Column(Modifier.padding(14.dp)) {
+                Text(stringResource(R.string.settings_developer), fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "NRSuite is developed by @7wp81x.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NrOnSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                NrSecondaryButton(
+                    text = stringResource(R.string.action_open_github),
+                    onClick = {
+                        runCatching {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/7wp81x/NRSuite"))
+                            )
+                        }
+                    },
+                )
+            }
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        ) {
+            Column(Modifier.padding(14.dp)) {
+                Text(stringResource(R.string.settings_about), fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = "NRSuite Android app. BLE, WiFi, HID, and storage operations are executed by the ESP32 companion.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NrOnSurfaceVariant,
+                )
+            }
+        }
+        }
+
+    }
+}
+
+@Composable
+private fun AppearanceCard(
+    themeMode: NrThemeMode,
+    onThemeModeChange: (NrThemeMode) -> Unit,
+    accentColor: NrAccentColor,
+    onAccentColorChange: (NrAccentColor) -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(
+                text = stringResource(R.string.settings_appearance),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = "Choose the interface palette. The selection is saved for the next launch.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                NrThemeMode.entries.forEach { mode ->
+                    NrFilterChip(
+                        selected = themeMode == mode,
+                        onClick = { onThemeModeChange(mode) },
+                        label = mode.label,
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = themeMode.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = "Accent color",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                val isLight = MaterialTheme.colorScheme.background.luminance() > 0.5f
+                NrAccentColor.entries.forEach { accent ->
+                    val preview = accent.previewColor(isLight)
+                    NrFilterChip(
+                        selected = accentColor == accent,
+                        onClick = { onAccentColorChange(accent) },
+                        label = accent.label,
+                        selectedColor = preview,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OuiRulesCard(
+    ouiRules: List<OuiRule>,
+    onAddOuiRule: (ouiPrefix: String, label: String, action: OuiRuleAction) -> Unit,
+    onDeleteOuiRule: (id: String) -> Unit,
+) {
+    var showAddForm by remember { mutableStateOf(false) }
+    var ouiInput by remember { mutableStateOf("") }
+    var labelInput by remember { mutableStateOf("") }
+    var actionInput by remember { mutableStateOf(OuiRuleAction.WHITELIST) }
+
+    val normalizedOui = normalizeOuiPrefix(ouiInput)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(stringResource(R.string.settings_oui_rules_title), fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Whitelist common AP hardware in your area to reduce false alarms. " +
+                    "Blacklist vendor prefixes known for rogue AP tools to flag them harder.",
+                style = MaterialTheme.typography.bodySmall,
+                color = NrOnSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+
+            if (ouiRules.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.settings_oui_no_rules),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NrOnSurfaceVariant,
+                )
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    ouiRules.forEach { rule ->
+                        OuiRuleRow(rule = rule, onDelete = { onDeleteOuiRule(rule.id) })
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            if (!showAddForm) {
+                NrSecondaryButton(
+                    text = stringResource(R.string.action_add_rule),
+                    onClick = { showAddForm = true },
+                )
+            } else {
+                Column {
+                    OutlinedTextField(
+                        value = ouiInput,
+                        onValueChange = { ouiInput = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.settings_oui_prefix_label)) },
+                        isError = ouiInput.isNotBlank() && normalizedOui == null,
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = labelInput,
+                        onValueChange = { labelInput = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.settings_rule_label)) },
+                        singleLine = true,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NrFilterChip(
+                            selected = actionInput == OuiRuleAction.WHITELIST,
+                            onClick = { actionInput = OuiRuleAction.WHITELIST },
+                            label = stringResource(R.string.status_whitelist),
+                        )
+                        NrFilterChip(
+                            selected = actionInput == OuiRuleAction.BLACKLIST,
+                            onClick = { actionInput = OuiRuleAction.BLACKLIST },
+                            label = stringResource(R.string.status_blacklist),
+                        )
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NrPrimaryButton(
+                            text = stringResource(R.string.action_save),
+                            onClick = {
+                                val normalized = normalizeOuiPrefix(ouiInput) ?: return@NrPrimaryButton
+                                onAddOuiRule(normalized, labelInput.trim(), actionInput)
+                                ouiInput = ""
+                                labelInput = ""
+                                actionInput = OuiRuleAction.WHITELIST
+                                showAddForm = false
+                            },
+                            enabled = normalizedOui != null && labelInput.isNotBlank(),
+                            compact = true,
+                        )
+                        NrQuietButton(
+                            text = stringResource(R.string.action_cancel),
+                            onClick = { showAddForm = false },
+                            compact = true,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OuiRuleRow(
+    rule: OuiRule,
+    onDelete: () -> Unit,
+) {
+    var confirmDelete by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = rule.ouiPrefix,
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (rule.label.isNotBlank()) {
+                Text(
+                    text = rule.label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NrOnSurfaceVariant,
+                )
+            }
+        }
+
+        val badgeColor = when (rule.action) {
+            OuiRuleAction.WHITELIST -> NrAccent
+            OuiRuleAction.BLACKLIST -> StatusRed
+        }
+        Row(
+            modifier = Modifier
+                .background(badgeColor.copy(alpha = 0.15f), RoundedCornerShape(50))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        ) {
+            Text(
+                text = when (rule.action) {
+                    OuiRuleAction.WHITELIST -> stringResource(R.string.status_whitelist)
+                    OuiRuleAction.BLACKLIST -> stringResource(R.string.status_blacklist)
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = badgeColor,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
+
+        IconButton(onClick = { confirmDelete = true }) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.action_delete_oui_rule),
+                tint = NrOnSurfaceVariant,
+            )
+        }
+    }
+
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.dialog_delete_rule_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_rule_text, rule.ouiPrefix)) },
+            confirmButton = {
+                NrDangerButton(
+                    text = stringResource(R.string.action_delete),
+                    onClick = {
+                        confirmDelete = false
+                        onDelete()
+                    },
+                    filled = true,
+                )
+            },
+            dismissButton = {
+                NrQuietButton(
+                    text = stringResource(R.string.action_cancel),
+                    onClick = { confirmDelete = false },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun BoardProfileInfo(
+    profile: com.swp81x.nrsuite.core.update.FirmwareBoardProfile?,
+    fileName: String?,
+) {
+    if (profile == null) return
+    Spacer(Modifier.height(8.dp))
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = NrSurfaceVariant),
+        border = BorderStroke(0.5.dp, NrOutline),
+        shape = RoundedCornerShape(10.dp),
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = fileName?.takeIf { it.isNotBlank() } ?: profile.variantLabel,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                    ),
+                    fontWeight = FontWeight.Medium,
+                    color = NrOnSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                if (!profile.validated) {
+                    Spacer(Modifier.width(6.dp))
+                    Surface(
+                        color = StatusAmber.copy(alpha = 0.10f),
+                        shape = RoundedCornerShape(99.dp),
+                        border = BorderStroke(0.5.dp, StatusAmber.copy(alpha = 0.45f)),
+                    ) {
+                        Text(
+                            text = "Experimental",
+                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = StatusAmber,
+                        )
+                    }
+                }
+            }
+            Text(
+                text = "${profile.flashDescription} · ${profile.psramDescription}",
+                style = MaterialTheme.typography.bodySmall,
+                color = NrOnSurfaceVariant,
+            )
+            Text(
+                text = "Partition: ${profile.partitionDescription}",
+                style = MaterialTheme.typography.bodySmall,
+                color = NrOnSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UpdatesCard(
+    currentVersion: String,
+    autoUpdateCheck: Boolean,
+    excludeBetaReleases: Boolean,
+    updateCheckInProgress: Boolean,
+    appUpdate: AppUpdateInfo?,
+    appUpdateDownload: AppUpdateDownloadState,
+    firmwareUpdate: FirmwareUpdateInfo?,
+    firmwareAssetDownload: FirmwareAssetDownloadState,
+    updateError: String?,
+    onAutoUpdateCheckChange: (Boolean) -> Unit,
+    onExcludeBetaReleasesChange: (Boolean) -> Unit,
+    onCheckForUpdates: () -> Unit,
+    onDownloadAppUpdate: () -> Unit,
+    onInstallAppUpdate: () -> Unit,
+    onDownloadFirmwareUpdate: () -> Unit,
+    onOpenFirmwareFlasher: () -> Unit,
+    onClearUpdateDownloads: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text("Updates", fontWeight = FontWeight.SemiBold)
+            if (BuildConfig.MOCK_RELEASE_DATA) {
+                Text(
+                    text = "MOCK RELEASE DATA — GitHub API checks are disabled",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = StatusAmber,
+                )
+            }
+            Text(
+                text = "App version $currentVersion",
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                color = NrOnSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Check automatically", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "Checks GitHub when the app opens, at most once per hour.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = autoUpdateCheck,
+                    onCheckedChange = onAutoUpdateCheckChange,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Receive beta updates", style = MaterialTheme.typography.bodyMedium)
+                    Text(
+                        text = "Off by default. Enable to include alpha and beta " +
+                            "releases alongside RC and stable releases in app and " +
+                            "firmware update checks.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(
+                    checked = !excludeBetaReleases,
+                    onCheckedChange = { receiveBetaUpdates ->
+                        onExcludeBetaReleasesChange(!receiveBetaUpdates)
+                    },
+                )
+            }
+
+            if (updateError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = updateError,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = StatusRed,
+                )
+            }
+
+            appUpdate?.let { update ->
+                Spacer(Modifier.height(10.dp))
+                val downloadState = appUpdateDownload
+                UpdateInfoRow(
+                    label = "App update available",
+                    latest = update.latest,
+                    buttonLabel = when (downloadState) {
+                        is AppUpdateDownloadState.Downloading -> {
+                            downloadState.percent?.let { "Downloading ${it.toInt()}%" }
+                                ?: stringResource(R.string.oui_downloading)
+                        }
+                        AppUpdateDownloadState.ReadyToInstall -> "Update"
+                        is AppUpdateDownloadState.Failed -> "Retry"
+                        AppUpdateDownloadState.Idle -> stringResource(R.string.action_download)
+                    },
+                    buttonEnabled = downloadState !is AppUpdateDownloadState.Downloading,
+                    onButtonClick = when (downloadState) {
+                        AppUpdateDownloadState.ReadyToInstall -> onInstallAppUpdate
+                        else -> onDownloadAppUpdate
+                    },
+                )
+            }
+
+            firmwareUpdate?.let { update ->
+                Spacer(Modifier.height(10.dp))
+                val downloadState = firmwareAssetDownload
+                UpdateInfoRow(
+                    label = "Firmware update available",
+                    latest = update.latest,
+                    buttonLabel = when (downloadState) {
+                        is FirmwareAssetDownloadState.Downloading -> {
+                            downloadState.percent?.let { "Downloading ${it.toInt()}%" }
+                                ?: stringResource(R.string.oui_downloading)
+                        }
+                        is FirmwareAssetDownloadState.Downloaded -> "Flash"
+                        is FirmwareAssetDownloadState.Failed -> "Retry"
+                        FirmwareAssetDownloadState.Idle -> stringResource(R.string.action_download)
+                    },
+                    buttonEnabled = downloadState !is FirmwareAssetDownloadState.Downloading,
+                    onButtonClick = when (downloadState) {
+                        is FirmwareAssetDownloadState.Downloaded -> onOpenFirmwareFlasher
+                        else -> onDownloadFirmwareUpdate
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+            NrSecondaryButton(
+                text = if (updateCheckInProgress) "Checking..." else "Check now",
+                onClick = onCheckForUpdates,
+                enabled = !updateCheckInProgress,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(6.dp))
+            NrDangerButton(
+                text = "Clear downloaded updates",
+                onClick = onClearUpdateDownloads,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun UpdateInfoRow(
+    label: String,
+    latest: ReleaseInfo,
+    buttonLabel: String = "Download",
+    buttonEnabled: Boolean = true,
+    onButtonClick: (() -> Unit)? = null,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = Icons.Default.Download,
+            contentDescription = null,
+            tint = StatusAmber,
+            modifier = Modifier.size(18.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = latest.tag,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                color = NrOnSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        NrSecondaryButton(
+            text = buttonLabel,
+            onClick = {
+                if (onButtonClick != null) {
+                    onButtonClick()
+                } else {
+                    val url = latest.downloadUrl ?: latest.htmlUrl
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    }
+                }
+            },
+            enabled = buttonEnabled,
+            modifier = Modifier.widthIn(min = 112.dp),
+            compact = true,
+        )
+    }
+}
+
+@Composable
+private fun OuiDatabaseCard(
+    status: OuiDatabaseStatus,
+    progress: Float?,
+    onDownload: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(0.5.dp, NrOutline),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(stringResource(R.string.dialog_oui_title), fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Download the IEEE OUI registry for offline vendor/MAC lookup. " +
+                    "No MAC lookup leaves the device.",
+                style = MaterialTheme.typography.bodySmall,
+                color = NrOnSurfaceVariant,
+            )
+            Spacer(Modifier.height(10.dp))
+
+            when (status) {
+                OuiDatabaseStatus.Checking -> {
+                    Text(
+                        text = "Checking local database…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                OuiDatabaseStatus.NotDownloaded -> {
+                    Text(
+                        text = stringResource(R.string.oui_not_downloaded),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                OuiDatabaseStatus.Downloading -> {
+                    if (progress != null) {
+                        LinearProgressIndicator(
+                            progress = { (progress / 100f).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.oui_downloading_progress, progress.toInt()),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontFamily = FontFamily.Monospace,
+                            ),
+                            color = StatusAmber,
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.oui_downloading),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = StatusAmber,
+                        )
+                    }
+                }
+                is OuiDatabaseStatus.Ready -> {
+                    Text(
+                        text = stringResource(R.string.oui_ready, status.vendorCount, status.updatedAt),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                        ),
+                        color = NrOnSurfaceVariant,
+                    )
+                }
+                is OuiDatabaseStatus.Error -> {
+                    Text(
+                        text = status.message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = StatusRed,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+            NrPrimaryButton(
+                text = if (status is OuiDatabaseStatus.Ready) {
+                    stringResource(R.string.action_update_database)
+                } else {
+                    stringResource(R.string.oui_download_database)
+                },
+                onClick = onDownload,
+                enabled = status !is OuiDatabaseStatus.Downloading &&
+                    status !is OuiDatabaseStatus.Checking,
+            )
+        }
+    }
+}
