@@ -57,11 +57,26 @@ jobs:
         # Keystore chung cua khahdihdz, quan ly boi repo khahdihdz/apksign
         # (alias khahdihdz-release, RSA-4096). Secrets duoc dong bo tu apksign
         # bang workflow "Sync Android signing to all repositories".
+        # Giong buoc validate cua apksign: cat khoang trang va bu padding
+        # Base64 truoc khi decode. base64 --decode se cat ngan file keystore
+        # neu thieu padding "=" ma khong bao loi (khong co pipefail), khien
+        # Gradle khong doc duoc khoa ky ("Given final block not properly padded").
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
         run: |
-          set -eu
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.jks
+          set -euo pipefail
+          B64="$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]')"
+          remainder=$(( ${#B64} % 4 ))
+          if [ "$remainder" -eq 1 ]; then
+            echo "ERROR: ANDROID_SIGNING_KEYSTORE_BASE64 has an invalid Base64 length." >&2
+            exit 1
+          elif [ "$remainder" -eq 2 ]; then
+            B64="$B64=="
+          elif [ "$remainder" -eq 3 ]; then
+            B64="$B64="
+          fi
+          printf '%s' "$B64" | base64 --decode > release.jks
+          test -s release.jks
 
       - name: Create release signing config
         env:
