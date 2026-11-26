@@ -1,1 +1,55 @@
-IyBOUlN1aXRlIEFuZHJvaWQg4oCUIFRp4bq/bmcgVmnhu4d0CgpC4bqjbiBWaeG7h3QgaMOzYSBj4bunYSBOUlN1aXRlIEFuZHJvaWQgMS4wLjAtdmkuMSwgZm9yayB04burIFs3d3A4MXgvbnJzdWl0ZS1hbmRyb2lkXShodHRwczovL2dpdGh1Yi5jb20vN3dwODF4L25yc3VpdGUtYW5kcm9pZCkuIEFwcCBBbmRyb2lkIMSRaeG7gXUga2hp4buDbiBib2FyZCBFU1AzMiBxdWEgVVNCLU9URyDEkeG7gyBuZ2hpw6puIGPhu6l1IGLhuqNvIG3huq10IFdpLUZpL0JMRSwga2jDtG5nIGPhuqduIGxhcHRvcCwga2jDtG5nIGPhuqduIHJvb3QuCgpUcmFuZyBnaeG7m2kgdGhp4buHdSB0aeG6v25nIFZp4buHdDogaHR0cHM6Ly9raGFoZGloZHouZ2l0aHViLmlvL05SU3VpdGUtQW5kcm9pZC8KCiMjIE5ndXnDqm4gdOG6r2MKCi0gROG7i2NoIHThu7Egbmhpw6puLCDGsHUgdGnDqm4gdGh14bqtdCBuZ+G7ryBr4bu5IHRodeG6rXQgcXVlbiB0aHXhu5ljLgotIEdp4buvIG5ndXnDqm4gdMOqbiBnaWFvIHRo4bupYywgY29tbWFuZCwgcHJvdG9jb2wsIE1BQy9CU1NJRC9SU1NJLCBCTEUsIFVTQiwgRVNQMzIgdsOgIGPDoWMgaWRlbnRpZmllciB0cm9uZyBjb2RlLgotIEtow7RuZyB0aGF5IMSR4buVaSBsb2dpYyBjaOG7qWMgbsSDbmcgY2jhu4kgxJHhu4MgZOG7i2NoIGdpYW8gZGnhu4duLgotIENodeG7l2kgZ2lhbyBkaeG7h24gxJHGsOG7o2MgY2h14bqpbiBi4buLIHRyb25nIEFuZHJvaWQgcmVzb3VyY2VzIChgYXBwL3NyYy9tYWluL3Jlcy92YWx1ZXMvc3RyaW5ncy54bWxgIHbDoCBgYXBwL3NyYy9tYWluL3Jlcy92YWx1ZXMtdmkvc3RyaW5ncy54bWxgKSDEkeG7gyB04burbmcgbW9kdWxlIGPDsyB0aOG7gyBjaHV54buDbiB04burIGhhcmQtY29kZSBzYW5nIGxvY2FsaXphdGlvbiBhbiB0b8Ogbi4KCiMjIFTDrW5oIG7Eg25nIGNow61uaAoKLSAqKkto4bqjbyBzw6F0IFdpLUZpOioqIHF1w6l0IEFQL2vDqm5oLCBTU0lELCBCU1NJRCwgUlNTSSwgYuG6o28gbeG6rXQsIFdQUzsgcGjDom4gdMOtY2gga8Oqbmg7IGLhuq90IGfDs2kgdGluIHbDoCB4deG6pXQgUENBUC4KLSAqKlThuqVuIGPDtG5nIChjaOG7iSBkw7luZyBraGkgxJHGsOG7o2Mg4buneSBxdXnhu4FuKToqKiBkZWF1dGgsIGJlYWNvbiwgRXZpbCBUd2luLCBDYXB0aXZlIFBvcnRhbCwgV1BTIFBpeGllIER1c3QsIGLhursgaGFuZHNoYWtlIFdQQSBuZ2/huqFpIHR1eeG6v24gKC4yMjAwMCkuCi0gKipQaMOybmcgduG7hzoqKiBwaMOhdCBoaeG7h24gQVAgZ2nhuqMgbeG6oW8sIGRlYXV0aCwgdHJhY2tlciwgY2xpZW50IGLhuqV0IHRoxrDhu51uZywga2jDs2EgV1BTLgotICoqQkxFOioqIHF1w6l0IHRoaeG6v3QgYuG7iywga2jhuqNvIHPDoXQgR0FUVCwgQkxFIEhJRCwgcGjDoXQgaGnhu4duIHRyYWNrZXIuCi0gKipI4buTbmcgbmdv4bqhaToqKiByZW1vdGUgRmxpcHBlciAuaXIsIHRodS9waMOhdCB0w61uIGhp4buHdSwgdMOsbSByZW1vdGUsIElSIEphbW1lciBjw7MgZ2nDoW0gc8OhdC4KLSAqKlRlcm1pbmFsOioqIFNTSCB04bubaSBUZXJtdXgsIGtow7NhIEVkMjU1MTkvUlNBLCBuaGnhu4F1IHRhYiwgcGjDrW0gdOG6r3QuCi0gKipGaXJtd2FyZToqKiBu4bqhcCBmaXJtd2FyZSBOUlN1aXRlIGNobyBFU1AzMi9TMi9TMy9DMy9DNSB0cm9uZyBhcHAsIFNlcmlhbCBNb25pdG9yLCBxdeG6o24gbMO9IGLhu5kgbmjhu5suCi0gKipNZXNoIChFU1AtTk9XKToqKiDEkWFuZyB0aOG7rSBuZ2hp4buHbSDigJQgY+G6pXAgcGjDoXQga2jDs2EgbmjDs20sIGLhuqd1IG1hc3RlciwgaGVhcnRiZWF0LCBiw6FvIGPDoW8gY+G6o20gYmnhur9uLgoKIyMgWcOqdSBj4bqndQoKLSDEkGnhu4duIHRob+G6oWkgQW5kcm9pZCA4LjAgdHLhu58gbMOqbiAoQVBJIDI2KSwgaOG7lyB0cuG7oyBVU0ItT1RHLgotIEJvYXJkIEVTUDMyIMSRw6MgbuG6oXAgZmlybXdhcmUgTlJTdWl0ZS4gQuG6o24gZmlybXdhcmUgdGnhur9uZyBWaeG7h3Q6IFtOUlN1aXRlLWZpcm13YXJlIHYxLjAuMC12aS4xXShodHRwczovL2dpdGh1Yi5jb20va2hhaGRpaGR6L05SU3VpdGUtZmlybXdhcmUvcmVsZWFzZXMvdGFnL3YxLjAuMC12aS4xKS4KLSBDw6FwIFVTQi1PVEcuCgojIyBDw6BpIMSR4bq3dAoKIyMjIFThu6sgbcOjIG5ndeG7k24KCmBgYGJhc2gKZ2l0IGNsb25lIGh0dHBzOi8vZ2l0aHViLmNvbS9raGFoZGloZHovTlJTdWl0ZS1BbmRyb2lkLmdpdApjZCBOUlN1aXRlLUFuZHJvaWQKLi9ncmFkbGV3IGFzc2VtYmxlRGVidWcKYGBgCgpBUEsgZGVidWcg4bufIGBhcHAvYnVpbGQvb3V0cHV0cy9hcGsvZGVidWcvYXBwLWRlYnVnLmFwa2AuIEPhuqduIEFuZHJvaWQgU3R1ZGlvIExhZHlidWcgdHLhu58gbMOqbiwgSkRLIDE3LCBBbmRyb2lkIFNESyBBUEkgMzYuCgojIyMgQuG6o24gcGjDoXQgaMOgbmgKClThuqNpIEFQSyB04burIFtSZWxlYXNlc10oaHR0cHM6Ly9naXRodWIuY29tL2toYWhkaWhkei9OUlN1aXRlLUFuZHJvaWQvcmVsZWFzZXMpLCBraeG7g20gdHJhIFNIQTI1NiB0cm9uZyBnaGkgY2jDuiByZWxlYXNlIHRyxrDhu5tjIGtoaSBjw6BpLgoKIyMgVHLhuqFuZyB0aMOhaSB2aeG7h3QgaMOzYQoKLSBMYW5kaW5nIHBhZ2UgdGnhur9uZyBWaeG7h3QgKGBkb2NzL2luZGV4Lmh0bWxgKSB2w6Agd29ya2Zsb3cgR2l0SHViIFBhZ2VzIChgLmdpdGh1Yi93b3JrZmxvd3MvcGFnZXMueW1sYCk6IHhvbmcuCi0gQuG6o25nIGNodeG7l2kgdGnhur9uZyBWaeG7h3QgKGB2YWx1ZXMtdmkvc3RyaW5ncy54bWxgKTogMTQ3IGtow7NhLCDEkWFuZyDEkcaw4bujYyBu4buRaSB2w6BvIFRyYW5nIGNow61uaCB2w6AgY8OhYyBtw6BuIGjDrG5oIGNow61uaC4gQ8OhYyBtw6BuIGjDrG5oIG1vZHVsZSBjw7JuIGzhuqFpIHbhuqtuIGhp4buDbiB0aOG7iyB0aeG6v25nIEFuaCBjaG8gdOG7m2kga2hpIMSRxrDhu6NjIGNodXnhu4NuIHNhbmcgcmVzb3VyY2UuCi0gUkVBRE1FIHRp4bq/bmcgQW5oIGfhu5FjIHbhuqtuIGdp4buvIG5ndXnDqm47IGZpbGUgbsOgeSBsw6AgYuG6o24gdGnhur9uZyBWaeG7h3QuCgojIyBDaOG7iSBkw7luZyBraGkgxJHGsOG7o2Mg4buneSBxdXnhu4FuCgpOUlN1aXRlIGNo4buJIGTDuW5nIGNobyBuZ2hpw6puIGPhu6l1IGLhuqNvIG3huq10IHRyw6puIG3huqFuZywgdGhp4bq/dCBi4buLIHbDoCBo4buHIHRo4buRbmcgbcOgIGLhuqFuIHPhu58gaOG7r3UgaG/hurdjIGPDsyBxdXnhu4FuIGtp4buDbSB0cmEgYuG6sW5nIHbEg24gYuG6o24uIFhlbSBgTEVHQUwubWRgLgo=
+# NRSuite Android — Tiếng Việt
+
+Bản Việt hóa của NRSuite Android 1.0.0-vi.1, fork từ [7wp81x/nrsuite-android](https://github.com/7wp81x/nrsuite-android). App Android điều khiển board ESP32 qua USB-OTG để nghiên cứu bảo mật Wi-Fi/BLE, không cần laptop, không cần root.
+
+Trang giới thiệu tiếng Việt: https://khahdihdz.github.io/NRSuite-Android/
+
+## Nguyên tắc
+
+- Dịch tự nhiên, ưu tiên thuật ngữ kỹ thuật quen thuộc.
+- Giữ nguyên tên giao thức, command, protocol, MAC/BSSID/RSSI, BLE, USB, ESP32 và các identifier trong code.
+- Không thay đổi logic chức năng chỉ để dịch giao diện.
+- Chuỗi giao diện được chuẩn bị trong Android resources (`app/src/main/res/values/strings.xml` và `app/src/main/res/values-vi/strings.xml`) để từng module có thể chuyển từ hard-code sang localization an toàn.
+
+## Tính năng chính
+
+- **Khảo sát Wi-Fi:** quét AP/kênh, SSID, BSSID, RSSI, bảo mật, WPS; phân tích kênh; bắt gói tin và xuất PCAP.
+- **Tấn công (chỉ dùng khi được ủy quyền):** deauth, beacon, Evil Twin, Captive Portal, WPS Pixie Dust, bẻ handshake WPA ngoại tuyến (.22000).
+- **Phòng vệ:** phát hiện AP giả mạo, deauth, tracker, client bất thường, khóa WPS.
+- **BLE:** quét thiết bị, khảo sát GATT, BLE HID, phát hiện tracker.
+- **Hồng ngoại:** remote Flipper .ir, thu/phát tín hiệu, tìm remote, IR Jammer có giám sát.
+- **Terminal:** SSH tới Termux, khóa Ed25519/RSA, nhiều tab, phím tắt.
+- **Firmware:** nạp firmware NRSuite cho ESP32/S2/S3/C3/C5 trong app, Serial Monitor, quản lý bộ nhớ.
+- **Mesh (ESP-NOW):** đang thử nghiệm — cấp phát khóa nhóm, bầu master, heartbeat, báo cáo cảm biến.
+
+## Yêu cầu
+
+- Điện thoại Android 8.0 trở lên (API 26), hỗ trợ USB-OTG.
+- Board ESP32 đã nạp firmware NRSuite. Bản firmware tiếng Việt: [NRSuite-firmware v1.0.0-vi.1](https://github.com/khahdihdz/NRSuite-firmware/releases/tag/v1.0.0-vi.1).
+- Cáp USB-OTG.
+
+## Cài đặt
+
+### Từ mã nguồn
+
+```bash
+git clone https://github.com/khahdihdz/NRSuite-Android.git
+cd NRSuite-Android
+./gradlew assembleDebug
+```
+
+APK debug ở `app/build/outputs/apk/debug/app-debug.apk`. Cần Android Studio Ladybug trở lên, JDK 17, Android SDK API 36.
+
+### Bản phát hành
+
+Tải APK từ [Releases](https://github.com/khahdihdz/NRSuite-Android/releases), kiểm tra SHA256 trong ghi chú release trước khi cài.
+
+## Trạng thái việt hóa
+
+- Landing page tiếng Việt (`docs/index.html`) và workflow GitHub Pages (`.github/workflows/pages.yml`): xong.
+- Bảng chuỗi tiếng Việt (`values-vi/strings.xml`): 147 khóa, đang được nối vào Trang chính và các màn hình chính. Các màn hình module còn lại vẫn hiển thị tiếng Anh cho tới khi được chuyển sang resource.
+- README tiếng Anh gốc vẫn giữ nguyên; file này là bản tiếng Việt.
+
+## Chỉ dùng khi được ủy quyền
+
+NRSuite chỉ dùng cho nghiên cứu bảo mật trên mạng, thiết bị và hệ thống mà bạn sở hữu hoặc có quyền kiểm tra bằng văn bản. Xem `LEGAL.md`.
