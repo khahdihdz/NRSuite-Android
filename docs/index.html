@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="NRSuite Android — bộ công cụ nghiên cứu mạng và thiết bị không dây trên Android.">
+<title>NRSuite Android — Bộ công cụ nghiên cứu không dây</title>
+<style>
+:root{color-scheme:dark;--bg:#071018;--panel:#0d1a24;--line:#1d3443;--text:#eaf3f7;--muted:#9db0bb;--accent:#5eead4;--accent2:#60a5fa}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 20% 0%,#123044 0,#071018 42%);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.65}
+.wrap{max-width:1100px;margin:auto;padding:0 22px}.nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0}.brand{font-weight:800;letter-spacing:.3px}.nav a{color:var(--muted);text-decoration:none;margin-left:20px}.hero{padding:72px 0 56px}.eyebrow{color:var(--accent);font-weight:700}.hero h1{font-size:clamp(42px,7vw,78px);line-height:1.02;margin:12px 0 22px;max-width:850px}.hero p{font-size:20px;color:var(--muted);max-width:760px}.buttons{margin-top:30px;display:flex;gap:12px;flex-wrap:wrap}.btn{display:inline-block;padding:13px 19px;border-radius:12px;text-decoration:none;font-weight:750;border:1px solid var(--line)}.primary{background:var(--accent);color:#04201d;border-color:var(--accent)}.secondary{color:var(--text);background:#0b1720}.section{padding:58px 0}.section h2{font-size:34px;margin:0 0 10px}.lead{color:var(--muted);max-width:720px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px}.card{background:rgba(13,26,36,.84);border:1px solid var(--line);border-radius:18px;padding:24px}.icon{font-size:28px}.card h3{margin:12px 0 8px}.card p{color:var(--muted);margin:0}.wide{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.list{padding:0;margin:18px 0 0;list-style:none}.list li{padding:11px 0;border-bottom:1px solid var(--line);color:var(--muted)}.list strong{color:var(--text)}.note{border-left:3px solid var(--accent);padding:16px 18px;background:rgba(94,234,212,.06);color:var(--muted);border-radius:0 12px 12px 0}.footer{padding:45px 0;color:var(--muted);border-top:1px solid var(--line)}@media(max-width:800px){.grid,.wide{grid-template-columns:1fr}.hero{padding-top:40px}.nav div:last-child{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="nav"><div class="brand">NRSuite Android 🇻🇳</div><div><a href="#features">Tính năng</a><a href="#about">Giới thiệu</a><a href="#download">Tải xuống</a></div></nav>
+
+<header class="hero">
+<div class="eyebrow">ANDROID • WI-FI • BLE • ESP32 • PHIÊN BẢN 1.0.0-vi.1</div>
+<h1>Bộ công cụ nghiên cứu mạng không dây, ngay trên Android.</h1>
+<p>NRSuite Android là ứng dụng đồng hành cho NRSuite, tập trung vào khảo sát Wi‑Fi/BLE, thu thập PCAP, quản lý thông tin xác thực và làm việc với phần cứng ESP32 qua USB‑OTG.</p>
+<div class="buttons"><a class="btn primary" href="https://github.com/khahdihdz/NRSuite-Android/releases">Tải bản phát hành</a><a class="btn secondary" href="https://github.com/khahdihdz/NRSuite-Android">Xem mã nguồn</a></div>
+</header>
+
+<section id="features" class="section">
+<h2>Tính năng</h2>
+<p class="lead">NRSuite Android tập hợp các công cụ khảo sát, phân tích và phòng vệ mạng không dây cùng tiện ích phần cứng vào một giao diện Android.</p>
+
+<div class="grid">
+<article class="card"><div class="icon">📡</div><h3>Khảo sát Wi‑Fi</h3><p>Phát hiện điểm truy cập, kênh, SSID, BSSID, RSSI, bảo mật và thông tin WPS để phục vụ khảo sát mạng.</p></article>
+<article class="card"><div class="icon">🕵️</div><h3>Phân tích gói tin</h3><p>Thu thập dữ liệu packet capture và xuất PCAP để phục vụ phân tích lưu lượng trong môi trường được phép.</p></article>
+<article class="card"><div class="icon">🟦</div><h3>Bluetooth Low Energy</h3><p>Quét thiết bị BLE, xem RSSI và dữ liệu nhà sản xuất, đồng thời khảo sát dịch vụ và characteristic GATT.</p></article>
+<article class="card"><div class="icon">🛡️</div><h3>Phòng vệ mạng</h3><p>Hỗ trợ phát hiện điểm truy cập đáng ngờ, theo dõi sự kiện Wi‑Fi, thiết bị theo dõi và các dấu hiệu bất thường.</p></article>
+<article class="card"><div class="icon">🔐</div><h3>Quản lý thông tin xác thực</h3><p>Lưu trữ credential cục bộ và hỗ trợ các quy trình kiểm thử được ủy quyền.</p></article>
+<article class="card"><div class="icon">🔌</div><h3>USB‑OTG & ESP32</h3><p>Kết nối nhiều thiết bị USB/ESP32, theo dõi serial và hỗ trợ các tiện ích firmware trực tiếp từ Android.</p></article>
+<article class="card"><div class="icon">🧰</div><h3>Công cụ hệ thống</h3><p>Tra cứu nhà sản xuất MAC/OUI, quản lý phiên USB và chọn thiết bị ngoại vi cho từng tác vụ.</p></article>
+<article class="card"><div class="icon">🌐</div><h3>Mesh & ESP‑NOW</h3><p>Kiến trúc mở rộng cho mạng nút cảm biến, báo cáo dữ liệu và các tính năng mesh trong lộ trình phát triển.</p></article>
+<article class="card"><div class="icon">🧲</div><h3>Hồng ngoại (IR)</h3><p>Import file .ir của Flipper, tải IRDB, thu và phát lại tín hiệu IR, tìm remote theo hãng và loại thiết bị.</p></article>
+<article class="card"><div class="icon">⌨️</div><h3>Terminal / Termux SSH</h3><p>Terminal SSH native tới Termux trên máy, xác thực khóa Ed25519/RSA, nhiều tab, phím tắt và lệnh mẫu.</p></article>
+<article class="card"><div class="icon">🔓</div><h3>WPS & WPA</h3><p>WPS Pixie Dust trực tiếp và ngoại tuyến, dò trạng thái khóa WPS, bắt và bẻ handshake WPA ngoại tuyến với .22000.</p></article>
+<article class="card"><div class="icon">🎭</div><h3>Evil Twin & Captive Portal</h3><p>AP giả mạo với portal tùy chỉnh bằng HTML, bắt form đăng nhập, quản lý template và giới hạn 24 KB.</p></article>
+<article class="card"><div class="icon">📍</div><h3>Định vị BSSID</h3><p>Tra cứu OUI ngoại tuyến và vị trí gần đúng của điểm truy cập Wi‑Fi, kèm lịch sử tra cứu và bản đồ.</p></article>
+<article class="card"><div class="icon">⚡</div><h3>Nạp firmware trong app</h3><p>Nạp firmware NRSuite cho ESP32, ESP32-S2, ESP32-S3, ESP32-C3 và ESP32-C5 trực tiếp qua USB, kèm Serial Monitor.</p></article>
+</div>
+
+<div class="wide" style="margin-top:18px">
+<div class="card">
+<h3>Đã triển khai</h3>
+<ul class="list">
+<li><strong>Wi‑Fi:</strong> quét mạng, phân tích kênh, thu thập PCAP và bắt handshake.</li>
+<li><strong>Tấn công (chỉ dùng khi được ủy quyền):</strong> deauth, beacon, Evil Twin, WPS Pixie Dust và bẻ WPA ngoại tuyến.</li>
+<li><strong>BLE:</strong> scanner, khảo sát GATT, BLE HID và phát hiện tracker.</li>
+<li><strong>Phòng vệ:</strong> phát hiện AP giả mạo, deauthentication, tracker và client bất thường.</li>
+<li><strong>IR:</strong> remote, thu/phát tín hiệu, tìm remote và IR Jammer có giám sát.</li>
+<li><strong>Terminal:</strong> SSH tới Termux, khóa Ed25519/RSA, nhiều tab và phím tắt.</li>
+<li><strong>USB:</strong> nhiều phiên thiết bị, Serial Monitor, nạp firmware và quản lý bộ nhớ ESP32.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Đang phát triển</h3>
+<ul class="list">
+<li><strong>Mesh (ESP‑NOW):</strong> đang thử nghiệm — cấp phát khóa nhóm, bầu master, heartbeat và báo cáo cảm biến phân tán.</li>
+<li><strong>ESP32‑CAM:</strong> camera và phát hiện chuyển động.</li>
+<li><strong>LoRa:</strong> liên kết tầm xa và cầu nối mesh.</li>
+<li><strong>Ngoại vi:</strong> Sub‑GHz, nRF24 và RFID/NFC.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section id="about" class="section">
+<div class="wide">
+<div>
+<h2>Được xây cho nghiên cứu thực tế</h2>
+<p class="lead">NRSuite Android hướng tới người dùng cần một giao diện di động cho các tác vụ nghiên cứu mạng, không dây và phần cứng.</p>
+<ul class="list">
+<li><strong>Android:</strong> thao tác trực tiếp trên thiết bị di động.</li>
+<li><strong>Wi‑Fi / BLE:</strong> các mô-đun dành cho nghiên cứu giao tiếp không dây.</li>
+<li><strong>PCAP:</strong> thu thập dữ liệu phục vụ phân tích.</li>
+<li><strong>ESP32:</strong> làm việc với firmware qua USB‑OTG.</li>
+</ul>
+</div>
+<div class="card">
+<h3>🇻🇳 Việt hóa</h3>
+<p>Trang giới thiệu và hạ tầng locale tiếng Việt đã được bổ sung. Bảng chuỗi tiếng Việt trong <code>app/src/main/res/values-vi/strings.xml</code> đang được nối vào Trang chính và các màn hình chính, để app hiển thị tiếng Việt khi máy đặt ngôn ngữ tiếng Việt, mà không thay đổi logic kỹ thuật hay giao thức với firmware.</p>
+<br>
+<div class="note">Chỉ sử dụng các chức năng kiểm thử và nghiên cứu trên hệ thống, thiết bị hoặc mạng mà bạn có quyền kiểm tra.</div>
+</div>
+</div>
+</section>
+
+<section id="download" class="section">
+<div class="wide">
+<div class="card">
+<h3>Yêu cầu</h3>
+<ul class="list">
+<li><strong>Điện thoại Android 8.0 trở lên</strong> (API 26), hỗ trợ USB‑OTG.</li>
+<li><strong>Board ESP32</strong> (ESP32, ESP32‑S2, ESP32‑S3, ESP32‑C3 hoặc ESP32‑C5) đã nạp firmware NRSuite.</li>
+<li><strong>Cáp USB‑OTG</strong> để nối board với điện thoại.</li>
+</ul>
+</div>
+<div class="card">
+<h3>Firmware tiếng Việt</h3>
+<p class="lead">Bản firmware tiếng Việt cho ESP32 đã có sẵn, dùng chung giao thức với app này.</p>
+<div class="buttons"><a class="btn primary" href="https://github.com/khahdihdz/NRSuite-firmware/releases/tag/v1.0.0-vi.1">Firmware v1.0.0‑vi.1</a><a class="btn secondary" href="https://github.com/khahdihdz/NRSuite-firmware">Repo firmware</a></div>
+</div>
+</div>
+<div class="card" style="margin-top:18px">
+<h2>Sẵn sàng trải nghiệm?</h2>
+<p class="lead">Xem các bản phát hành, mã nguồn và tiến độ phát triển trực tiếp trên GitHub.</p>
+<div class="buttons"><a class="btn primary" href="https://github.com/khahdihdz/NRSuite-Android/releases">GitHub Releases</a><a class="btn secondary" href="https://github.com/khahdihdz/NRSuite-Android">Repository</a></div>
+</div>
+</section>
+
+<footer class="footer">NRSuite Android 1.0.0-vi.1 · Trang giới thiệu tiếng Việt · Mã nguồn mở trên GitHub · Chỉ dùng trên hệ thống, thiết bị hoặc mạng mà bạn có quyền kiểm tra</footer>
+</div>
+</body>
+</html>
