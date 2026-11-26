@@ -1,0 +1,548 @@
+package com.swp81x.nrsuite
+
+import android.hardware.usb.UsbDevice
+import com.swp81x.nrsuite.core.flasher.FirmwareFlashDevicePhase
+import com.swp81x.nrsuite.core.log.LogLevel
+import com.swp81x.nrsuite.core.session.ConnectionState
+import com.swp81x.nrsuite.core.session.NrSession
+import com.swp81x.nrsuite.core.usb.UsbSerialDeviceCatalog
+import com.swp81x.nrsuite.core.usb.UsbSerialTransport
+import com.swp81x.nrsuite.core.usb.buildDeviceFingerprintKey
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
+import org.json.JSONObject
+
+// USB discovery, permission handling, connection lifecycle, and per-device sessions.
+
+internal fun MainViewModel.refreshDevicesImpl() {
+    val found = UsbSerialDeviceCatalog.list(usbManager)
+    _devices.value = found
+    reconcileFirmwareFlashDeviceStateWithAttachedDevices()
+
+    val busyDeviceIds = (deviceSessions + idleDeviceSessions).values
+        .map { it.device.device.deviceId }
+        .toSet()
+    _unacknowledgedDevices.value = found
+        .filter { !usbManager.hasPermission(it.device) && it.device.deviceId !in busyDeviceIds }
+        .map { it.device.deviceId }
+        .toSet()
+
+    appendLog("Found ${found.size} supported USB serial device(s).")
+
+    // Reconcile active sessions against Android's authoritative attached-device
+    // list. The serial prober can transiently miss an already-open device; only
+    // close a session when the USB device itself is no longer attached.
+    val attachedDeviceIds = usbManager.deviceList.values
+        .map { it.deviceId }
+        .toSet()
+    (deviceSessions + idleDeviceSessions).entries
+        .filter { (_, entry) ->
+            entry.openedOnce && entry.device.device.deviceId !in attachedDeviceIds
+        }
+        .map { it.key }
+        .toList()
+        .forEach { staleFingerprint ->
+            appendLog("Closing stale session for a detached USB device.", level = LogLevel.USB)
+            disconnectSession(staleFingerprint, stopOperations = staleFingerprint == activeDeviceFingerprint)
+        }
+
+    // If the selected flash target vanished or lost permission, clear it so
+    // the flasher asks for permission instead of showing a stale "Selected".
+    val selectedTarget = _firmwareTargetDevice.value
+    if (selectedTarget != null) {
+        val stillPresent = found.firstOrNull {
+            it.device.deviceId == selectedTarget.device.deviceId
+        }
+        if (stillPresent == null || !usbManager.hasPermission(stillPresent.device)) {
+            _firmwareTargetDevice.value = null
+            _firmwareTargetChip.value = null
+            _firmwareTargetFirmwareVersion.value = null
+        } else {
+            val sameTarget = runCatching {
+                deviceFingerprintImpl(selectedTarget.device) ==
+                    deviceFingerprintImpl(stillPresent.device)
+            }.getOrDefault(false)
+            if (!sameTarget) {
+                // The USB device id was reused by a different board. Clear the
+                // target and let the UI require an explicit new selection.
+                _firmwareTargetDevice.value = null
+                _firmwareTargetChip.value = null
+                _firmwareTargetFirmwareVersion.value = null
+            } else {
+                _firmwareTargetDevice.value = stillPresent
+            }
+        }
+    }
+
+    // BadUSB target selection is independent of the primary feature session.
+    // Keep it if the USB device is still attached; update it to the freshest
+    // catalog entry so its driver/UsbDevice references do not go stale.
+    val badUsbTarget = _badUsbTargetDevice.value
+    if (badUsbTarget != null) {
+        val stillAttached = usbManager.deviceList.values.any {
+            it.deviceId == badUsbTarget.device.deviceId
+        }
+        if (!stillAttached) {
+            val targetFingerprint = deviceFingerprintImpl(badUsbTarget.device)
+            _badUsbTargetDevice.value = null
+            _badUsbProgress.value = 0
+            _badUsbArmedFingerprints.update { it - targetFingerprint }
+            appendLog("BadUSB target disconnected; selection cleared.", tag = "USB")
+        } else {
+            _badUsbTargetDevice.value = found.firstOrNull {
+                it.device.deviceId == badUsbTarget.device.deviceId
+            } ?: badUsbTarget
+        }
+    }
+}
+
+/**
+ * A native-USB ESP32 can re-enumerate under a new Android device id while the
+ * flash is still running. If exactly one supported device is attached and the
+ * current flash state no longer matches it, move the state to that device so
+ * the Home/Devices row keeps its Flashing/Flashed feedback across the reboot.
+ */
+private fun MainViewModel.reconcileFirmwareFlashDeviceStateWithAttachedDevices() {
+    val flashState = _firmwareFlashDeviceState.value ?: return
+    val devices = _devices.value
+    if (devices.isEmpty()) return
+    if (devices.any { flashState.matches(it.device.deviceId, deviceFingerprintImpl(it.device)) }) {
+        return
+    }
+    val replacement = devices.singleOrNull() ?: return
+    _firmwareFlashDeviceState.value = flashState.copy(
+        deviceId = replacement.device.deviceId,
+        fingerprint = deviceFingerprintImpl(replacement.device),
+    )
+}
+
+internal fun MainViewModel.onUsbDeviceAttachedImpl(device: UsbDevice?) {
+    if (deviceSessions.isEmpty() && _connectionState.value is ConnectionState.Failed) {
+        _connectionState.value = ConnectionState.Disconnected
+    }
+    refreshDevices()
+    appendLog("USB device attached.", level = LogLevel.USB)
+    appendLog("Tap Connect to open a session when ready.", level = LogLevel.USB)
+    tryManualFirmwareFlashOnAttachImpl()
+
+    // USB hotplug can re-enumerate several times while a board is booting.
+    // Debounce each device independently and keep a per-device prompt stack.
+    val targetDeviceId = device?.deviceId
+    usbAttachPromptJobs[targetDeviceId ?: Int.MIN_VALUE]?.cancel()
+    usbAttachPromptJobs[targetDeviceId ?: Int.MIN_VALUE] = scope.launch {
+        kotlinx.coroutines.delay(700)
+        val entry = if (targetDeviceId != null) {
+            _devices.value.firstOrNull { it.device.deviceId == targetDeviceId }
+        } else {
+            _devices.value.firstOrNull()
+        } ?: return@launch
+
+        // Serial Monitor owns the device exclusively while connected. A prompt
+        // for the same device would incorrectly offer a second connection.
+        if (serialMonitorOwnsDeviceImpl(entry.device)) return@launch
+
+        val now = System.currentTimeMillis()
+        val lastPromptAt = lastUsbAttachPromptAtByDevice[entry.device.deviceId] ?: 0L
+        if (now - lastPromptAt < USB_ATTACH_PROMPT_COOLDOWN_MS) return@launch
+        lastUsbAttachPromptAtByDevice[entry.device.deviceId] = now
+        _usbAttachPrompts.update { prompts ->
+            (prompts.filterNot { it.deviceId == entry.device.deviceId } + UsbAttachPrompt(
+                device = entry,
+                hasPermission = usbManager.hasPermission(entry.device),
+            )).takeLast(MAX_USB_ATTACH_PROMPTS)
+        }
+        kotlinx.coroutines.delay(USB_ATTACH_PROMPT_VISIBLE_MS)
+        _usbAttachPrompts.update { prompts ->
+            prompts.filterNot { it.deviceId == entry.device.deviceId }
+        }
+        usbAttachPromptJobs.remove(entry.device.deviceId)
+    }
+}
+
+internal fun MainViewModel.refreshDeviceStatusImpl(device: UsbDevice) {
+    val fingerprint = deviceFingerprintImpl(device)
+    val session = deviceSessions[fingerprint]?.session
+        ?: activeDeviceFingerprint?.let { deviceSessions[it]?.session }
+        ?: return
+    scope.launch {
+        appendLog("Refreshing device status for ${device.productName ?: device.deviceName}...", tag = "USB")
+        runCatching { session.refreshStatus() }
+            .onSuccess { refreshed ->
+                if (refreshed) {
+                    appendLog("Device status refreshed.", tag = "USB")
+                } else {
+                    appendLog("Device status refresh returned no data.", level = LogLevel.INFO, tag = "USB")
+                }
+            }
+            .onFailure { error ->
+                appendLog(
+                    "Device status refresh failed: ${error.message ?: error.javaClass.simpleName}",
+                    level = LogLevel.ERROR,
+                    tag = "USB",
+                )
+            }
+    }
+}
+
+internal fun MainViewModel.deviceFingerprintImpl(device: UsbDevice): String {
+    val serial = runCatching { device.serialNumber }.getOrNull().orEmpty()
+    return buildDeviceFingerprintKey(
+        serial = serial,
+        vendorId = device.vendorId,
+        productId = device.productId,
+        manufacturer = device.manufacturerName,
+        productName = device.productName,
+        deviceName = device.deviceName,
+        deviceId = device.deviceId,
+    )
+}
+
+internal fun MainViewModel.onUsbDeviceDetachedImpl(device: UsbDevice) {
+    clearPermissionRequestImpl(device.deviceId)
+    val serialMonitorDevice = _serialMonitorSelected.value?.device
+    val serialMonitorSelectionMatches = serialMonitorDevice?.deviceId == device.deviceId ||
+        serialMonitorDevice?.deviceName == device.deviceName
+    if (serialMonitorOwnsDeviceImpl(device) || serialMonitorSelectionMatches) {
+        stopSerialMonitorImpl()
+        _serialMonitorSelected.value = null
+        _serialMonitorError.value = "USB serial device disconnected."
+        appendLog(
+            "Serial Monitor stopped because ${device.productName ?: device.deviceName} detached.",
+            level = LogLevel.ERROR,
+            tag = "USB",
+        )
+    }
+    // Keep the row in Flashing/Flashed during bootloader/re-enumeration
+    // transients while the flash operation is still finishing. Once the app has
+    // fully completed the operation, the next physical detach clears the result
+    // so the next attach returns to a normal Connect.
+    if (!_firmwareFlashing.value) {
+        val flashState = _firmwareFlashDeviceState.value
+        val detachedFingerprint = runCatching { deviceFingerprintImpl(device) }.getOrNull().orEmpty()
+        if (flashState?.matches(device.deviceId, detachedFingerprint) == true) {
+            _firmwareFlashDeviceState.value = null
+        }
+    }
+    firmwareTargetChipHints.remove(device.deviceId)
+    usbAttachPromptJobs.remove(device.deviceId)?.cancel()
+    _usbAttachPrompts.update { prompts ->
+        prompts.filterNot { it.deviceId == device.deviceId }
+    }
+    runCatching { deviceFingerprintImpl(device) }.getOrNull()?.let { fingerprint ->
+        _badUsbArmedFingerprints.update { it - fingerprint }
+    }
+    refreshDevices()
+    appendLog("USB device detached: ${device.deviceName}", level = LogLevel.USB)
+
+    val detachedFingerprint = runCatching { deviceFingerprintImpl(device) }.getOrNull()
+    val allSessions = deviceSessions + idleDeviceSessions
+    val matchedFingerprint = detachedFingerprint
+        ?.takeIf { allSessions.containsKey(it) }
+        ?: allSessions.entries.firstOrNull { (_, session) ->
+            session.device.device.deviceId == device.deviceId ||
+                session.device.device.deviceName == device.deviceName
+        }?.key
+
+    if (matchedFingerprint == null) {
+        appendLog("Detached device had no open session.", level = LogLevel.USB)
+        return
+    }
+
+    if (_firmwareTargetDevice.value?.device?.deviceId == device.deviceId) {
+        _firmwareTargetDevice.value = null
+    }
+    if (_badUsbTargetDevice.value?.device?.deviceId == device.deviceId) {
+        _badUsbTargetDevice.value = null
+        _badUsbProgress.value = 0
+        appendLog("BadUSB target detached; selection cleared.", tag = "USB")
+    }
+
+    // Only the detached device's session is torn down. Every other session,
+    // its connection state, and its active operation remain untouched.
+    disconnectSession(matchedFingerprint, stopOperations = true)
+}
+
+internal fun MainViewModel.hasPermissionImpl(device: UsbDevice): Boolean =
+    usbManager.hasPermission(device)
+
+internal fun MainViewModel.onPermissionResultImpl(device: UsbDevice, granted: Boolean) {
+    clearPermissionRequestImpl(device.deviceId)
+    val reallyGranted = granted || usbManager.hasPermission(device)
+    appendLog(
+        if (reallyGranted) "USB permission granted for ${device.deviceName}."
+        else "USB permission denied for ${device.deviceName}.",
+        level = LogLevel.USB,
+    )
+
+    if (serialMonitorPermissionDeviceId == device.deviceId) {
+        serialMonitorPermissionDeviceId = null
+        if (reallyGranted) {
+            refreshDevicesImpl()
+            val entry = _devices.value.firstOrNull { it.device.deviceId == device.deviceId }
+                ?: UsbSerialDeviceCatalog.find(usbManager, device)
+            if (entry != null) {
+                startSerialMonitorImpl(entry, _serialMonitorBaud.value)
+            } else {
+                appendLog("No supported USB serial driver for Serial Monitor.", level = LogLevel.ERROR)
+            }
+        }
+        return
+    }
+
+    if (firmwarePermissionDeviceId == device.deviceId) {
+        firmwarePermissionDeviceId = null
+        if (reallyGranted) {
+            refreshDevicesImpl()
+            selectFirmwareTargetImpl(device)
+        }
+        return
+    }
+
+    if (reallyGranted) {
+        refreshDevices()
+        connect(device)
+    }
+}
+
+internal fun MainViewModel.switchActiveDeviceImpl(device: UsbDevice): Boolean {
+    val fingerprint = deviceFingerprintImpl(device)
+    val entry = deviceSessions[fingerprint] ?: run {
+        appendLog("Device is not connected; connect it before switching.", tag = "USB")
+        return false
+    }
+    if (fingerprint == activeDeviceFingerprint) return false
+    val state = entry.session.state.value
+    if (state !is ConnectionState.Connected) {
+        appendLog("Device is not ready to become active yet.", tag = "USB")
+        return false
+    }
+    stopActiveOperations()
+    _primaryFingerprint.value = fingerprint
+    _connectionState.value = state
+    if (_firmwareTargetDevice.value == null) {
+        _firmwareTargetDevice.value = entry.device
+    }
+    appendLog("Active device switched to ${entry.device.displayName}.", tag = "USB")
+    updateForegroundService()
+    return true
+}
+
+internal fun MainViewModel.connectImpl(device: UsbDevice) {
+    dismissUsbAttachPrompt(device.deviceId)
+    if (!usbManager.hasPermission(device)) {
+        appendLog("USB permission is required before connecting.")
+        return
+    }
+
+    refreshDevicesImpl()
+    if (usbManager.deviceList.values.none { it.deviceId == device.deviceId }) {
+        appendLog("USB device ${device.deviceName} is no longer attached.")
+        return
+    }
+
+    val entry = _devices.value.firstOrNull { it.device.deviceId == device.deviceId }
+        ?: UsbSerialDeviceCatalog.find(usbManager, device)
+    if (entry == null) {
+        appendLog("No supported USB serial driver for ${device.deviceName}.")
+        return
+    }
+
+    val fingerprint = deviceFingerprintImpl(entry.device)
+    val previousPrimary = activeDeviceFingerprint
+
+    if (serialMonitorOwnsDeviceImpl(entry.device)) {
+        val message = "Close Serial Monitor before connecting the NRSuite session."
+        appendLog(message, level = LogLevel.ERROR, tag = "USB")
+        _toastMessage.value = message
+        return
+    }
+
+    if (fingerprint in _disconnectingFingerprints.value) {
+        appendLog("${entry.displayName} is still disconnecting; try again in a moment.", tag = "USB")
+        return
+    }
+
+    // Adopt an idle-but-still-open session instead of closing/reopening the
+    // USB port. This is the workaround for TinyUSB S2 devices that stop
+    // answering after a host-side close/reopen cycle.
+    val idle = idleDeviceSessions.remove(fingerprint)
+    if (idle != null && idle.session.state.value is ConnectionState.Connected) {
+        val reactivated = DeviceSession(
+            fingerprint = fingerprint,
+            device = entry,
+            session = idle.session,
+            opening = true,
+        )
+        deviceSessions[fingerprint] = reactivated
+        _deviceConnectionStates.update { it + (fingerprint to ConnectionState.Connecting) }
+
+        val shouldBecomePrimary = previousPrimary == null || previousPrimary == fingerprint
+        if (shouldBecomePrimary) {
+            _primaryFingerprint.value = fingerprint
+            _connectionState.value = ConnectionState.Connecting
+            if (_firmwareTargetDevice.value == null) {
+                _firmwareTargetDevice.value = entry
+            }
+        }
+
+        observe(fingerprint, idle.session)
+        // observe() seeds from the session's existing Connected state; keep the
+        // UI in Connecting until the PING validation completes.
+        _deviceConnectionStates.update { it + (fingerprint to ConnectionState.Connecting) }
+        if (fingerprint == activeDeviceFingerprint) {
+            _connectionState.value = ConnectionState.Connecting
+        }
+
+        scope.launch {
+            appendLog("Reactivating ${entry.displayName} [$fingerprint]...", tag = "USB")
+            idle.session.prepareForReuse()
+            val pong = idle.session.sendCommand(
+                "PING",
+                JSONObject().put("pad", 0),
+                timeoutMs = 2_000,
+            )
+            if (pong?.optBoolean("ok") == true) {
+                val connected = idle.session.state.value
+                reactivated.opening = false
+                reactivated.openedOnce = true
+                _deviceConnectionStates.update { it + (fingerprint to connected) }
+                if (fingerprint == activeDeviceFingerprint) {
+                    _connectionState.value = connected
+                }
+                appendLog("Connected to ${(connected as? ConnectionState.Connected)?.chip ?: "NRSuite device"} (reused idle session).", tag = "USB")
+            } else {
+                appendLog("Idle session did not respond to PING; reopening.", tag = "USB")
+                deviceSessions.remove(fingerprint)
+                reactivated.observers.forEach { it.cancel() }
+                _deviceConnectionStates.update { it - fingerprint }
+                if (fingerprint == activeDeviceFingerprint) {
+                    val next = deviceSessions.keys.firstOrNull()
+                    _primaryFingerprint.value = next
+                    _connectionState.value = next
+                        ?.let { _deviceConnectionStates.value[it] }
+                        ?: ConnectionState.Disconnected
+                }
+                usbOperationMutex.withLock {
+                    runCatching { idle.session.disconnect() }
+                }
+            }
+        }
+        return
+    }
+    if (idle != null) {
+        // Stale idle transport; close it before opening a fresh session.
+        scope.launch {
+            usbOperationMutex.withLock {
+                runCatching { idle.session.disconnect() }
+            }
+        }
+    }
+
+    val anotherDeviceOpening = deviceSessions.values.any {
+        it.opening && it.fingerprint != fingerprint
+    }
+    if (anotherDeviceOpening) {
+        appendLog("Another USB device is still connecting; try again in a moment.", tag = "USB")
+        return
+    }
+
+    val replacing = deviceSessions[fingerprint]
+    val replacingState = replacing?.session?.state?.value
+    if (replacing?.opening == true ||
+        replacingState is ConnectionState.Connecting ||
+        replacingState is ConnectionState.Connected
+    ) {
+        appendLog("${entry.displayName} is already connected or connecting.")
+        return
+    }
+
+    // Tear down only this fingerprint's prior session. The actual USB close is
+    // serialized below and completes before the replacement session opens.
+    if (replacing != null) {
+        val replacingPrimary = previousPrimary == fingerprint
+        if (replacingPrimary) {
+            stopActiveOperations()
+        }
+        deviceSessions.remove(fingerprint)
+        replacing.observers.forEach { it.cancel() }
+        _deviceConnectionStates.update { it - fingerprint }
+        if (replacingPrimary) {
+            val next = deviceSessions.keys.firstOrNull()
+            _primaryFingerprint.value = next
+            _connectionState.value = next
+                ?.let { _deviceConnectionStates.value[it] }
+                ?: ConnectionState.Disconnected
+        }
+    }
+
+    val newSession = NrSession(
+        transport = UsbSerialTransport(usbManager, entry.driver),
+        scope = scope,
+        deviceLabel = entry.displayName,
+    )
+    deviceSessions[fingerprint] = DeviceSession(
+        fingerprint = fingerprint,
+        device = entry,
+        session = newSession,
+        opening = true,
+    )
+    _deviceConnectionStates.update { it + (fingerprint to ConnectionState.Connecting) }
+
+    // Preserve the existing primary unless this is the first session or the
+    // same device is being replaced/reconnected.
+    val shouldBecomePrimary = previousPrimary == null || previousPrimary == fingerprint
+    if (shouldBecomePrimary) {
+        _primaryFingerprint.value = fingerprint
+        _connectionState.value = ConnectionState.Connecting
+        if (_firmwareTargetDevice.value == null) {
+            _firmwareTargetDevice.value = entry
+        }
+    }
+
+    observe(fingerprint, newSession)
+    scope.launch {
+        appendLog("Opening ${entry.displayName} [$fingerprint]...", tag = "USB")
+        usbOperationMutex.withLock {
+            // Close any prior session for this same fingerprint before opening.
+            replacing?.let { old ->
+                if (old.session.state.value is ConnectionState.Connected) {
+                    runCatching { old.session.sendCommand("STOP_ALL", timeoutMs = 1_500) }
+                }
+                runCatching { old.session.disconnect() }
+                kotlinx.coroutines.delay(250)
+            }
+            newSession.connect(
+                permissionGranted = usbManager.hasPermission(entry.device),
+            )
+        }
+    }
+}
+
+internal fun MainViewModel.markPermissionRequestedImpl(device: UsbDevice) {
+    _pendingPermissionRequests.update { it + device.deviceId }
+}
+
+internal fun MainViewModel.clearPermissionRequestImpl(deviceId: Int) {
+    _pendingPermissionRequests.update { it - deviceId }
+}
+
+internal fun MainViewModel.disconnectDeviceImpl(device: UsbDevice) {
+    val exactFingerprint = runCatching { deviceFingerprintImpl(device) }.getOrNull()
+    val fingerprint = exactFingerprint
+        ?.takeIf { deviceSessions.containsKey(it) }
+        ?: deviceSessions.entries.firstOrNull { (_, session) ->
+            session.device.device.deviceId == device.deviceId ||
+                session.device.device.deviceName == device.deviceName
+        }?.key
+        ?: return
+    idleSession(
+        fingerprint = fingerprint,
+        stopOperations = fingerprint == activeDeviceFingerprint,
+    )
+}
+
+
+private const val USB_ATTACH_PROMPT_COOLDOWN_MS = 8_000L
+private const val USB_ATTACH_PROMPT_VISIBLE_MS = 10_000L
+private const val MAX_USB_ATTACH_PROMPTS = 4
